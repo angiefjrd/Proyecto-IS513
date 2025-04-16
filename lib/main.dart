@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: StreamBuilder(
+      /*home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -62,7 +62,8 @@ class MyApp extends StatelessWidget {
           }
           return const SignUpPage();
         },
-      ),
+      ),    */
+      home: const MyHomePage(),
     );
   }
 }
