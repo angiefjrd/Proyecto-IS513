@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:writerhub/widgets/firebase_options.dart';
+import 'package:writerhub/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:writerhub/views/signup_page.dart';
 import 'package:writerhub/views/home_page.dart';

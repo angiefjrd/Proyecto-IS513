@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -33,10 +30,7 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -48,6 +42,16 @@ class DefaultFirebaseOptions {
         );
     }
   }
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCN6K1EhjaT-Ppw7qSmKGbsSVF9tGxUuu8',
+    appId: '1:17452818977:web:06880d7bd21a007246b960',
+    messagingSenderId: '17452818977',
+    projectId: 'writerhub-d3112',
+    authDomain: 'writerhub-d3112.firebaseapp.com',
+    storageBucket: 'writerhub-d3112.firebasestorage.app',
+    measurementId: 'G-KQ1DR4MMEF',
+  );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCZHQCHUuU_RXPzw4oXHrHGXdgPvZV-5r4',
@@ -66,4 +70,13 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.writerhub',
   );
 
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyCN6K1EhjaT-Ppw7qSmKGbsSVF9tGxUuu8',
+    appId: '1:17452818977:web:2a25966cf98ec88d46b960',
+    messagingSenderId: '17452818977',
+    projectId: 'writerhub-d3112',
+    authDomain: 'writerhub-d3112.firebaseapp.com',
+    storageBucket: 'writerhub-d3112.firebasestorage.app',
+    measurementId: 'G-BSF4307VV3',
+  );
 }
