@@ -1,14 +1,14 @@
 class Book {
   final String id;
   final String title;
-  final List<String> authors;
+  final String author;
   final String description;
   final String thumbnail;
 
   Book({
     required this.id,
     required this.title,
-    required this.authors,
+    required this.author,
     required this.description,
     required this.thumbnail,
   });
@@ -19,7 +19,9 @@ class Book {
     return Book(
       id: json['id'] ?? '',
       title: volumeInfo['title'] ?? 'Sin título',
-      authors: List<String>.from(volumeInfo['authors'] ?? ['Autor desconocido']),
+      author: (volumeInfo['authors'] != null && volumeInfo['authors'] is List)
+          ? (volumeInfo['authors'] as List).join(', ')
+          : 'Autor desconocido',
       description: volumeInfo['description'] ?? 'Sin descripción',
       thumbnail: imageLinks['thumbnail'] ?? '',
     );

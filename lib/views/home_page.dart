@@ -21,7 +21,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _booksFuture = _apiService.fetchBooks(query: 'fiction');
+    // Cargar los libros desde la API
+    _booksFuture = _apiService.fetchBooks(query: 'fiction'); // Aquí puedes cambiar la búsqueda
   }
 
   @override
@@ -39,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       body: FutureBuilder<List<Book>>(
-        future: _booksFuture,
+        future: _booksFuture, // Cargar los libros
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -49,6 +50,8 @@ class _MyHomePageState extends State<MyHomePage> {
             return const Center(child: Text('No se encontraron libros.'));
           } else {
             final books = snapshot.data!;
+
+            // Si los libros se cargaron correctamente, mostrar el GridView
             return GridView.builder(
               padding: const EdgeInsets.all(8),
               itemCount: books.length,
@@ -59,7 +62,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisSpacing: 8,
               ),
               itemBuilder: (context, index) {
-                return BookCard(book: books[index]); 
+                // Pasamos el libro a BookCard
+                return BookCard(book: books[index]);
               },
             );
           }
