@@ -19,7 +19,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Task Management',
+      debugShowCheckedModeBanner: false,
+      title: 'Writer hub',
       theme: ThemeData(
         fontFamily: 'Cera Pro',
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      /*home: StreamBuilder(
+      home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -62,8 +63,8 @@ class MyApp extends StatelessWidget {
           }
           return const SignUpPage();
         },
-      ),    */
-      home: const MyHomePage(),
+      ),    
+      
     );
   }
 }

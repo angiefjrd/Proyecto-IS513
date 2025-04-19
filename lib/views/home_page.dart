@@ -1,10 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:writerhub/models/book.dart';
 import 'package:writerhub/widgets/botton_nav.dart';
+import 'package:writerhub/widgets/logo_text.dart';
 import '../widgets/book_card.dart';
 import '../services/api_services.dart';
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -29,11 +30,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('WriterHub'),
+        centerTitle: true,
+        title: const LogoText(),
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/profile');
+              //Navigator.pushNamed(context, '/profile');
+              FirebaseAuth.instance.signOut();
             },
             icon: const Icon(Icons.account_circle),
           ),

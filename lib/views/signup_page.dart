@@ -2,6 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:writerhub/views/login_page.dart';
+import 'package:writerhub/widgets/logo_text.dart';
 
 class SignUpPage extends StatefulWidget {
   static route() => MaterialPageRoute(
@@ -48,10 +49,11 @@ class _SignUpPageState extends State<SignUpPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const LogoText(fontSize: 40),
               const Text(
-                'Sign Up.',
+                'Sign Up',
                 style: TextStyle(
-                  fontSize: 50,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),

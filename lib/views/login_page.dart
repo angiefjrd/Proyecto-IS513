@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:writerhub/views/signup_page.dart';
+import 'package:writerhub/widgets/logo_text.dart';
 
 class LoginPage extends StatefulWidget {
   static route() => MaterialPageRoute(
@@ -31,6 +32,9 @@ class _LoginPageState extends State<LoginPage> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
+      if (userCredential.user != null) {
+        Navigator.pop(context);
+      }
       print(userCredential);
     } on FirebaseAuthException catch (e) {
       print(e.message);
@@ -48,10 +52,11 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const LogoText(fontSize: 40),
               const Text(
-                'Sign In.',
+                'Log In',
                 style: TextStyle(
-                  fontSize: 50,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
