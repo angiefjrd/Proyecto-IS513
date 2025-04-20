@@ -4,8 +4,9 @@ import 'package:writerhub/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:writerhub/views/signup_page.dart';
 import 'package:writerhub/views/home_page.dart';
+import 'package:writerhub/views/login_page.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Task Management',
+      title: 'WriterHub',
       theme: ThemeData(
         fontFamily: 'Cera Pro',
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -42,28 +43,27 @@ class MyApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide( 
-              width: 3,
-            ),
+            borderSide: const BorderSide(width: 3),
             borderRadius: BorderRadius.circular(10),
           ),
         ),
       ),
-      /*home: StreamBuilder(
+      home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
             );
           }
-          if (snapshot.data != null) {
-            return const MyHomePage();
+          if (snapshot.hasData && snapshot.data != null) {
+            return const MyHomePage(); 
+          } else {
+            return const LoginPage(); 
           }
-          return const SignUpPage();
         },
-      ),    */
-      home: const MyHomePage(),
+      ),
     );
   }
 }
+

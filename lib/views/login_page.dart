@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:writerhub/views/signup_page.dart';
+import 'package:writerhub/views/home_page.dart';
 import 'package:writerhub/widgets/logo_text.dart';
 
 class LoginPage extends StatefulWidget {
@@ -33,11 +34,15 @@ class _LoginPageState extends State<LoginPage> {
         password: passwordController.text.trim(),
       );
       if (userCredential.user != null) {
-        Navigator.pop(context);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MyHomePage()),
+        );
       }
-      print(userCredential);
     } on FirebaseAuthException catch (e) {
-      print(e.message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Error al iniciar sesión')),
+      );
     }
   }
 
@@ -66,6 +71,12 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: const InputDecoration(
                   hintText: 'Email',
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ingrese su correo';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 15),
               TextFormField(
@@ -74,11 +85,19 @@ class _LoginPageState extends State<LoginPage> {
                   hintText: 'Password',
                 ),
                 obscureText: true,
+                validator: (value) {
+                  if (value == null || value.length < 6) {
+                    return 'Contraseña demasiado corta';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  await loginUserWithEmailAndPassword();
+                  if (formKey.currentState!.validate()) {
+                    await loginUserWithEmailAndPassword();
+                  }
                 },
                 child: const Text(
                   'SIGN IN',
