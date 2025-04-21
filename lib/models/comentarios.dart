@@ -3,7 +3,7 @@ class Comentario {
   final String autor;
   final String texto;
   final DateTime fecha;
-  final String avatarUrl; // Nuevo campo para la imagen de perfil
+  final String avatarUrl;
 
   Comentario({
     required this.id,
@@ -12,4 +12,8 @@ class Comentario {
     required this.fecha,
     this.avatarUrl = '',
   });
+
+  String fechaFormateada() {
+    return "${fecha.day}/${fecha.month}/${fecha.year}";
+  }
 }

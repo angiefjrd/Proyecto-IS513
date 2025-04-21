@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'widgets/ruta.dart';
 import 'widgets/controller.dart';
-import 'package:writerhub/views/home_page.dart';
+import 'tema/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,40 +27,19 @@ class MyApp extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        // Manejamos el estado de carga
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator(); // O alguna pantalla de carga
+        }
+
+        // Configuración del router con validación de datos del usuario
         return GetMaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'WriterHub',
-          theme: ThemeData(
-            fontFamily: 'Cera Pro',
-            elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                minimumSize: const Size(double.infinity, 60),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-            inputDecorationTheme: InputDecorationTheme(
-              contentPadding: const EdgeInsets.all(27),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.grey.shade300,
-                  width: 3,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(width: 3),
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          routerConfig: rutas(snapshot.data),
+          theme: appTheme,
+          routerConfig: Rutas.configurarRutas(snapshot.data), // Aquí se pasa snapshot.data
         );
       },
     );
   }
-  final controller = Get.find<Controller>();
-
 }

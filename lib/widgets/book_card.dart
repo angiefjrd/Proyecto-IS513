@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:writerhub/models/book.dart';
+import 'package:writerhub/models/libro.dart';
 import '../views/detalle_page.dart';
 
-class BookCard extends StatelessWidget {
-  final Book book;
+class LibroCard extends StatelessWidget {
+  final Libro book;
 
-  const BookCard({super.key, required this.book});
+  const LibroCard({super.key, required this.book});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +27,9 @@ class BookCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            book.thumbnail.isNotEmpty
+            book.portadaUrl.isNotEmpty
                 ? Image.network(
-                    book.thumbnail,
+                    book.portadaUrl,
                     fit: BoxFit.cover,
                     height: 150,
                     width: double.infinity,
@@ -38,7 +38,7 @@ class BookCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                book.title,
+                book.titulo,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -50,7 +50,7 @@ class BookCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
               child: Text(
-                'by ${book.author}',
+                'by ${book.autor}',
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,

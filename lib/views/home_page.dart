@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:writerhub/models/book.dart';
+import 'package:writerhub/models/libro.dart';
 import 'package:writerhub/widgets/botton_nav.dart';
 import 'package:writerhub/widgets/logo_text.dart';
 import '../widgets/book_card.dart';
@@ -17,7 +17,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   final ApiService _apiService = ApiService();
-  late Future<List<Book>> _booksFuture;
+  late Future<List<Libro>> _booksFuture;
 
   @override
   void initState() {
@@ -42,7 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: FutureBuilder<List<Book>>(
+      body: FutureBuilder<List<Libro>>(
         future: _booksFuture, // Cargar los libros
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -65,8 +65,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisSpacing: 8,
               ),
               itemBuilder: (context, index) {
-                // Pasamos el libro a BookCard
-                return BookCard(book: books[index]);
+                
+                return LibroCard(book: books[index]);
               },
             );
           }
