@@ -2,7 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../views/home_page.dart';
 import '../views/login_page.dart';
-import '../views/detalle_page.dart';
+import '../views/detalles_libro.dart';
 import '../views/agregar_libro.dart';
 import '../views/arte_pantalla.dart';
 
@@ -18,7 +18,7 @@ GoRouter rutas(User? user) {
         routes: [
           GoRoute(
             path: 'libro/:id',
-            builder: (context, state) => DetallePage(
+            builder: (context, state) => DetallesLibro(
               libroId: state.pathParameters['id']!,
             ),
           ),
