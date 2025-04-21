@@ -263,6 +263,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
           Get.to(() => CrearCapituloPage(
                 libroId: _libro.id,
                 numeroCapitulo: nextChapter,
+                tituloLibro: _libro.titulo,
               ));
         } else {
           Get.to(() => LecturaLibroPage(libro: _libro));

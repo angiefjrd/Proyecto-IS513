@@ -221,6 +221,7 @@ class LecturaLibroPage extends StatelessWidget {
     Get.to(() => CrearCapituloPage(
       libroId: libro.id,
       numeroCapitulo: 1,
+      tituloLibro: libro.titulo,
     ));
   }
 

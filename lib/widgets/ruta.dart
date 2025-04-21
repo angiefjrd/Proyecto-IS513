@@ -67,6 +67,7 @@ class Rutas {
               builder: (context, state) => CrearCapituloPage(
                 libroId: state.pathParameters['libroId']!,
                 numeroCapitulo: int.parse(state.pathParameters['numero']!),
+                tituloLibro: state.pathParameters['tituloLibro']!,
               ),
             ),
             GoRoute(

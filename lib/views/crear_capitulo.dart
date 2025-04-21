@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:writerhub/widgets/controller.dart';
 import '../models/capitulo.dart';
+import '../models/libro.dart';
 
 class CrearCapituloPage extends StatefulWidget {
   final String libroId;
+  final String tituloLibro; 
   int numeroCapitulo;
 
   CrearCapituloPage({
     super.key,
     required this.libroId,
+    required this.tituloLibro,
     required this.numeroCapitulo,
   });
 
@@ -22,17 +25,19 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
   final TextEditingController _tituloController = TextEditingController();
   final TextEditingController _contenidoController = TextEditingController();
   bool _guardarComoBorrador = false;
+  final Controller controller = Get.find();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Capítulo ${widget.numeroCapitulo}'),
+        title: Text('Capítulo ${widget.numeroCapitulo} - "${widget.tituloLibro}"'),
         actions: [
           IconButton(
             icon: const Icon(Icons.menu_book),
             onPressed: () {
-              // Navegar a vista de todos los capítulos
+              // Aquí puedes navegar a la vista de capítulos del libro
+              // Ejemplo: Get.to(() => ListaCapitulosPage(libroId: widget.libroId));
             },
           ),
         ],
@@ -67,6 +72,7 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
                   ),
                   maxLines: null,
                   expands: true,
+                  keyboardType: TextInputType.multiline,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Escribe el contenido del capítulo';
@@ -94,17 +100,14 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _publicarCapitulo,
+                      onPressed: () => _publicarCapitulo(yContinuar: false),
                       child: const Text('Publicar Capítulo'),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
-                        // Opción para añadir otro capítulo después
-                        _publicarCapitulo(yContinuar: true);
-                      },
+                      onPressed: () => _publicarCapitulo(yContinuar: true),
                       child: const Text('Publicar y Continuar'),
                     ),
                   ),
@@ -122,20 +125,19 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
       final nuevoCapitulo = Capitulo(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         libroId: widget.libroId,
-        titulo: _tituloController.text,
-        contenido: _contenidoController.text,
+        titulo: _tituloController.text.trim(),
+        contenido: _contenidoController.text.trim(),
         numero: widget.numeroCapitulo,
         fechaPublicacion: DateTime.now(),
       );
 
-      final controller = Get.find<Controller>();
       await controller.agregarCapitulo(nuevoCapitulo);
-      
+
       if (yContinuar) {
         _tituloController.clear();
         _contenidoController.clear();
         setState(() {
-          widget.numeroCapitulo++;
+          widget.numeroCapitulo++; 
         });
       } else {
         Get.back();

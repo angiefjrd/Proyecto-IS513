@@ -40,16 +40,18 @@ class _LecturaCapitulosPageState extends State<LecturaCapitulosPage> {
           if (FirebaseAuth.instance.currentUser?.uid == widget.libro.autorId)
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () {
-                final nextChapter = _controller.capitulos.isEmpty 
-                    ? 1 
-                    : _controller.capitulos.last.numero + 1;
-                Get.to(() => CrearCapituloPage(
+               onPressed: () {
+                 final nextChapter = _controller.capitulos.isEmpty 
+                 ? 1 
+                 : _controller.capitulos.last.numero + 1;
+                 Get.to(() => CrearCapituloPage(
                   libroId: widget.libro.id,
                   numeroCapitulo: nextChapter,
-                ))?.then((_) => _controller.cargarCapitulos(widget.libro.id));
-              },
-            ),
+                  tituloLibro: widget.libro.titulo,  
+                   ))?.then((_) => _controller.cargarCapitulos(widget.libro.id));
+                 },
+              )
+
         ],
       ),
       body: Obx(() {
