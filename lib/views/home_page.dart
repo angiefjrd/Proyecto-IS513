@@ -5,6 +5,7 @@ import 'package:writerhub/widgets/botton_nav.dart';
 import 'package:writerhub/widgets/logo_text.dart';
 import '../widgets/book_card.dart';
 import '../services/api_services.dart';
+import '../views/perfil_page.dart';
 
 
 class MyHomePage extends StatefulWidget {
@@ -23,7 +24,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     // Cargar los libros desde la API
-    _booksFuture = _apiService.fetchBooks(query: 'fiction'); // Aquí puedes cambiar la búsqueda
+    _booksFuture = _apiService.fetchBooks(query: 'fiction'); 
   }
 
   @override
@@ -35,13 +36,16 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           IconButton(
             onPressed: () {
-              //Navigator.pushNamed(context, '/profile');
-              FirebaseAuth.instance.signOut();
-            },
-            icon: const Icon(Icons.account_circle),
-          ),
+              Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            );
+          },
+        icon: const Icon(Icons.account_circle),
+        ),
         ],
       ),
+        //FirebaseAuth.instance.signOut();
       body: FutureBuilder<List<Libro>>(
         future: _booksFuture, // Cargar los libros
         builder: (context, snapshot) {
