@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class BottomNav extends StatelessWidget {
   const BottomNav({super.key});
@@ -18,11 +19,43 @@ class BottomNav extends StatelessWidget {
       ],
       onTap: (index) {
         if (index == 0) {
-          Navigator.pushNamed(context, '/create');
+          // Mostrar diálogo para elegir tipo de creación
+          _mostrarDialogoCreacion(context);
         } else {
-          Navigator.pushNamed(context, '/library');
+          context.go('/');
         }
       },
+    );
+  }
+
+  void _mostrarDialogoCreacion(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Qué deseas crear?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.book),
+              title: const Text('Libro completo'),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/crear-libro');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.library_books),
+              title: const Text('Libro por capítulos'),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/crear-libro');
+                // El tipo se selecciona en la siguiente pantalla
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

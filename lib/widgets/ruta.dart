@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart'; // Add this import
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:writerhub/views/lecturalib.dart';
 import '../views/home_page.dart';
 import '../views/login_page.dart';
 import '../views/signup_page.dart';
@@ -9,8 +11,12 @@ import '../views/agregar_libro.dart';
 import '../views/arte_pantalla.dart';
 import '../views/galeria.dart';
 import '../views/detalle_page.dart';
+import '../views/crear_libro.dart';
+import '../views/crear_capitulo.dart';
+import '../views/lecturacap.dart';
+import '../views/lecturalib.dart';
 import '../models/arte.dart';
-import 'package:flutter/material.dart';
+import '../models/libro.dart';
 
 class Rutas {
   static GoRouter configurarRutas(User? usuario) {
@@ -34,6 +40,10 @@ class Rutas {
               builder: (context, state) => const AgregarLibro(),
             ),
             GoRoute(
+              path: 'crear-libro',
+              builder: (context, state) => const CrearLibroPage(),
+            ),
+            GoRoute(
               path: 'arte/:libroId',
               builder: (context, state) => ArtePantalla(
                 libroId: state.pathParameters['libroId']!,
@@ -50,6 +60,25 @@ class Rutas {
                   imagenUrl: '',
                   descripcion: '',
                 ),
+              ),
+            ),
+            GoRoute(
+              path: 'crear-capitulo/:libroId/:numero',
+              builder: (context, state) => CrearCapituloPage(
+                libroId: state.pathParameters['libroId']!,
+                numeroCapitulo: int.parse(state.pathParameters['numero']!),
+              ),
+            ),
+            GoRoute(
+              path: 'leer-capitulos/:libroId',
+              builder: (context, state) => LecturaCapitulosPage(
+                libro: state.extra as Libro,
+              ),
+            ),
+            GoRoute(
+              path: 'leer-libro/:libroId',
+              builder: (context, state) => LecturaLibroPage(
+                libro: state.extra as Libro,
               ),
             ),
           ],
@@ -80,4 +109,3 @@ class Rutas {
     );
   }
 }
-

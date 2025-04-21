@@ -4,7 +4,6 @@ import 'package:writerhub/views/galeria.dart';
 import '../widgets/controller.dart';
 import '../models/arte.dart';
 
-
 class ArtePantalla extends StatelessWidget {
   final String libroId;
 
@@ -93,13 +92,13 @@ class ArtePantalla extends StatelessWidget {
                 child: Text('No hay obras de arte para este libro todavía.'),
               )
             else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: artesDelLibro.length,
-                itemBuilder: (context, index) {
-                  return Galeria(arte: artesDelLibro[index]);
-                },
+              Expanded(
+                child: ListView.builder(
+                  itemCount: artesDelLibro.length,
+                  itemBuilder: (context, index) {
+                    return Galeria(arte: artesDelLibro[index]);
+                  },
+                ),
               ),
           ],
         ),

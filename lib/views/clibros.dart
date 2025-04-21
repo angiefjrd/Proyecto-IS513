@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:writerhub/models/comentarios.dart';
 
-class CLibro extends StatelessWidget {
-  final String comentario;
+class Comentariolib extends StatelessWidget {
+  final Comentario comentario;
 
-  const CLibro({
-    super.key,
-    required this.comentario,
-  });
+  const Comentariolib({super.key, required this.comentario});
 
   @override
   Widget build(BuildContext context) {
@@ -18,24 +16,28 @@ class CLibro extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Encabezado con avatar y nombre
             Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 14,
-                  child: Icon(Icons.person, size: 14),
+                  backgroundImage: comentario.avatarUrl.isNotEmpty 
+                      ? NetworkImage(comentario.avatarUrl) 
+                      : null,
+                  child: comentario.avatarUrl.isEmpty
+                      ? const Icon(Icons.person, size: 14)
+                      : null,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Usuario anónimo',
-                  style: TextStyle(
+                Text(
+                  comentario.autor,
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  'Hoy',
+                  _formatearFecha(comentario.fecha),
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -44,14 +46,10 @@ class CLibro extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            
-            // Cuerpo del comentario
             Text(
-              comentario,
+              comentario.texto,
               style: const TextStyle(fontSize: 14),
             ),
-            
-            // Acciones (opcional)
             const SizedBox(height: 8),
             Row(
               children: [
@@ -74,5 +72,17 @@ class CLibro extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatearFecha(DateTime fecha) {
+    final now = DateTime.now();
+    final difference = now.difference(fecha);
+
+    if (difference.inMinutes < 1) return 'Ahora mismo';
+    if (difference.inHours < 1) return 'Hace ${difference.inMinutes} min';
+    if (difference.inDays < 1) return 'Hace ${difference.inHours} h';
+    if (difference.inDays < 7) return 'Hace ${difference.inDays} días';
+
+    return '${fecha.day}/${fecha.month}/${fecha.year}';
   }
 }

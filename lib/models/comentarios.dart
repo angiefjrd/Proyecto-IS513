@@ -10,7 +10,7 @@ class Comentario {
     required this.autor,
     required this.texto,
     required this.fecha,
-    required this.avatarUrl,
+    this.avatarUrl = '',
   });
 
   Map<String, dynamic> toMap() {

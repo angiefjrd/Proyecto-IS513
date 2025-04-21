@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:go_router/go_router.dart';
-import '../widgets/controller.dart';
+import 'package:writerhub/models/libro.dart';
+import 'package:writerhub/widgets/controller.dart';
+import 'package:writerhub/views/lecturacap.dart';
+import 'package:writerhub/views/lecturalib.dart';
+import 'package:writerhub/views/crear_capitulo.dart';
+import 'package:writerhub/views/clibros.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DetalleLibroPage extends StatefulWidget {
   final String libroId;
@@ -13,168 +18,329 @@ class DetalleLibroPage extends StatefulWidget {
 }
 
 class _DetalleLibroPageState extends State<DetalleLibroPage> {
-  final Controller controller = Get.find();
-  final TextEditingController comentarioController = TextEditingController();
+  final Controller _controller = Get.find();
+  final TextEditingController _comentarioController = TextEditingController();
+  late Libro _libro;
+  bool _cargando = true;
 
   @override
-  void dispose() {
-    comentarioController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _cargarLibro();
+  }
+
+  Future<void> _cargarLibro() async {
+    setState(() => _cargando = true);
+    try {
+      _libro = _controller.libros.firstWhere((l) => l.id == widget.libroId);
+      if (_libro.esEnEmision) {
+        await _controller.cargarCapitulos(_libro.id);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'No se pudo cargar el libro');
+    } finally {
+      setState(() => _cargando = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final libro = controller.libros.firstWhere(
-        (libro) => libro.id == widget.libroId,
-        orElse: () => throw Exception('Libro no encontrado'),
+    if (_cargando) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
+    }
 
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(libro.titulo),
-          actions: [
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_libro.titulo),
+        actions: [
+          if (_libro.esEnEmision)
             IconButton(
-              icon: const Icon(Icons.brush),
-              onPressed: () => context.go('/arte/${libro.id}'),
-              tooltip: 'Ver obras de arte',
+              icon: const Icon(Icons.auto_stories),
+              onPressed: () => Get.to(
+                () => LecturaCapitulosPage(libro: _libro),
+              ),
             ),
+          if (_controller.capitulos.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.list),
+              onPressed: () => _mostrarListaCapitulos(),
+            ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPortada(),
+            _buildInfoLibro(),
+            _buildReacciones(),
+            _buildSeccionCapitulos(),
+            _buildComentarios(),
           ],
         ),
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+      floatingActionButton: _buildActionButton(),
+    );
+  }
+
+  Widget _buildPortada() {
+    return Container(
+      height: 250,
+      width: double.infinity,
+      color: Colors.grey[200],
+      child: _libro.portadaUrl.isNotEmpty
+          ? Image.network(_libro.portadaUrl, fit: BoxFit.cover)
+          : const Icon(Icons.book, size: 100),
+    );
+  }
+
+  Widget _buildInfoLibro() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_libro.titulo, style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Text('Por ${_libro.autor}', 
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Row(
             children: [
-              // Portada y detalles
-              Container(
-                height: 250,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                ),
-                child: libro.portadaUrl.isNotEmpty
-                    ? Image.network(
-                        libro.portadaUrl,
-                        fit: BoxFit.contain,
-                      )
-                    : const Icon(Icons.book, size: 100, color: Colors.white),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      libro.titulo,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Por ${libro.autor}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber),
-                        Text(' ${libro.calificacion.toStringAsFixed(1)}'),
-                        const SizedBox(width: 20),
-                        const Icon(Icons.people),
-                        Text(' ${libro.lectores} lectores'),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Descripción',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(libro.descripcion),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Reacciones',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        ActionChip(
-                          avatar: const Icon(Icons.thumb_up, size: 16),
-                          label: const Text('Me gusta'),
-                          onPressed: () => controller.agregarReaccion(
-                              libro.id, 'me gusta'),
-                          backgroundColor: libro.reacciones.contains('me gusta')
-                              ? Theme.of(context).primaryColor
-                              : null,
-                        ),
-                        ActionChip(
-                          avatar: const Icon(Icons.favorite, size: 16),
-                          label: const Text('Fascinante'),
-                          onPressed: () => controller.agregarReaccion(
-                              libro.id, 'fascinante'),
-                          backgroundColor:
-                              libro.reacciones.contains('fascinante')
-                                  ? Theme.of(context).primaryColor
-                                  : null,
-                        ),
-                        ActionChip(
-                          avatar: const Icon(Icons.star, size: 16),
-                          label: const Text('Increíble'),
-                          onPressed: () => controller.agregarReaccion(
-                              libro.id, 'increíble'),
-                          backgroundColor: libro.reacciones.contains('increíble')
-                              ? Theme.of(context).primaryColor
-                              : null,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Comentarios',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: comentarioController,
-                            decoration: const InputDecoration(
-                              hintText: 'Añade un comentario...',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.send),
-                          onPressed: () {
-                            if (comentarioController.text.isNotEmpty) {
-                              controller.agregarComentario(
-                                libro.id,
-                                comentarioController.text,
-                              );
-                              comentarioController.clear();
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
+              const Icon(Icons.star, color: Colors.amber),
+              Text(' ${_libro.calificacion.toStringAsFixed(1)}'),
+              const SizedBox(width: 20),
+              const Icon(Icons.people),
+              Text(' ${_libro.lectores} lectores'),
             ],
           ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => context.go('/agregar-arte/${libro.id}'),
-          child: const Icon(Icons.brush),
+          const SizedBox(height: 16),
+          const Text('Descripción', 
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(_libro.descripcion),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReacciones() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Reacciones',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              _buildReaccionChip('Me gusta', Icons.thumb_up),
+              _buildReaccionChip('Fascinante', Icons.favorite),
+              _buildReaccionChip('Increíble', Icons.star),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReaccionChip(String texto, IconData icono) {
+    return ActionChip(
+      avatar: Icon(icono, size: 16),
+      label: Text(texto),
+      onPressed: () => _controller.agregarReaccion(_libro.id, texto),
+      backgroundColor: _libro.reacciones.contains(texto)
+          ? Theme.of(context).primaryColor.withOpacity(0.2)
+          : null,
+    );
+  }
+
+  Widget _buildSeccionCapitulos() {
+    if (!_libro.esEnEmision) return const SizedBox();
+
+    return Obx(() {
+      final capitulos = _controller.capitulos;
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Capítulos',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            if (capitulos.isEmpty)
+              const Text('Aún no hay capítulos publicados')
+            else
+              Column(
+                children: capitulos.take(3).map((capitulo) => ListTile(
+                  title: Text('Capítulo ${capitulo.numero}: ${capitulo.titulo}'),
+                  subtitle: Text(_formatearFecha(capitulo.fechaPublicacion)),
+                  onTap: () => Get.to(
+                    () => LecturaCapitulosPage(libro: _libro),
+                    arguments: {'capituloInicial': capitulo.numero},
+                  ),
+                )).toList(),
+              ),
+            if (capitulos.length > 3)
+              TextButton(
+                onPressed: _mostrarListaCapitulos,
+                child: const Text('Ver todos los capítulos'),
+              ),
+          ],
         ),
       );
     });
+  }
+
+  Widget _buildComentarios() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Comentarios',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          if (_libro.comentarios.isEmpty)
+            const Text('Sé el primero en comentar')
+          else
+            Column(
+              children: _libro.comentarios
+                  .take(3)
+                  .map((c) => Comentariolib(comentario: c))
+                  .toList(),
+            ),
+          if (_libro.comentarios.length > 3)
+            TextButton(
+              onPressed: () => _mostrarTodosComentarios(),
+              child: const Text('Ver todos los comentarios'),
+            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _comentarioController,
+                  decoration: const InputDecoration(
+                    hintText: 'Añade un comentario...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.send),
+                onPressed: () {
+                  if (_comentarioController.text.isNotEmpty) {
+                    _controller.agregarComentario(
+                      _libro.id,
+                      _comentarioController.text,
+                    );
+                    _comentarioController.clear();
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user?.uid != _libro.autorId) return const SizedBox();
+
+    return FloatingActionButton(
+      onPressed: () {
+        if (_libro.esEnEmision) {
+          final nextChapter = _controller.capitulos.isEmpty
+              ? 1
+              : _controller.capitulos.last.numero + 1;
+          Get.to(() => CrearCapituloPage(
+                libroId: _libro.id,
+                numeroCapitulo: nextChapter,
+              ));
+        } else {
+          Get.to(() => LecturaLibroPage(libro: _libro));
+        }
+      },
+      child: Icon(_libro.esEnEmision ? Icons.add : Icons.edit),
+    );
+  }
+
+  void _mostrarListaCapitulos() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          children: [
+            Text('Capítulos de ${_libro.titulo}',
+                style: Theme.of(context).textTheme.headlineSmall),
+            Expanded(
+              child: Obx(() {
+                final capitulos = _controller.capitulos;
+                return ListView.builder(
+                  itemCount: capitulos.length,
+                  itemBuilder: (ctx, index) {
+                    final capitulo = capitulos[index];
+                    return ListTile(
+                      title: Text('Capítulo ${capitulo.numero}: ${capitulo.titulo}'),
+                      subtitle: Text(_formatearFecha(capitulo.fechaPublicacion)),
+                      onTap: () {
+                        Get.back();
+                        Get.to(
+                          () => LecturaCapitulosPage(libro: _libro),
+                          arguments: {'capituloInicial': capitulo.numero},
+                        );
+                      },
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _mostrarTodosComentarios() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          children: [
+            Text('Todos los comentarios',
+                style: Theme.of(context).textTheme.headlineSmall),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _libro.comentarios.length,
+                itemBuilder: (ctx, index) {
+                  return Comentariolib(
+                    comentario: _libro.comentarios[index],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatearFecha(DateTime fecha) {
+    return '${fecha.day}/${fecha.month}/${fecha.year}';
   }
 }
