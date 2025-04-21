@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "17452818977",
+    "project_id": "writerhub-d3112",
+    "storage_bucket": "writerhub-d3112.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17452818977:android:c6064ddd1f0b0e4c46b960",
+        "android_client_info": {
+          "package_name": "com.example.writerhub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZHQCHUuU_RXPzw4oXHrHGXdgPvZV-5r4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
