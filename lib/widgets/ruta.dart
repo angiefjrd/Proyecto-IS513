@@ -10,6 +10,7 @@ import '../views/arte_pantalla.dart';
 import '../views/galeria.dart';
 import '../views/detalle_page.dart';
 import '../models/arte.dart';
+import 'package:flutter/material.dart';
 
 class Rutas {
   static GoRouter configurarRutas(User? usuario) {
@@ -51,10 +52,6 @@ class Rutas {
                 ),
               ),
             ),
-            GoRoute(
-              path: 'perfil',
-              builder: (context, state) => const PerfilPage(),
-            ),
           ],
         ),
         GoRoute(
@@ -66,6 +63,21 @@ class Rutas {
           builder: (context, state) => const SignUpPage(),
         ),
       ],
+      redirect: (BuildContext context, GoRouterState state) {
+        final usuario = FirebaseAuth.instance.currentUser;
+        final path = state.uri.path;
+
+        final estaEnLogin = path == '/login' || path == '/signup';
+
+        if (usuario == null && !estaEnLogin) {
+          return '/login';
+        } else if (usuario != null && estaEnLogin) {
+          return '/';
+        }
+
+        return null;
+      },
     );
   }
 }
+

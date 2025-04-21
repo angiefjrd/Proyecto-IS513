@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:writerhub/views/galeria.dart';
 import '../widgets/controller.dart';
 import '../models/arte.dart';
-import '../views/galeria.dart';
+
 
 class ArtePantalla extends StatelessWidget {
   final String libroId;

@@ -1,3 +1,5 @@
+import 'package:writerhub/models/comentarios.dart';
+
 class Libro {
   final String id;
   final String titulo;
@@ -6,8 +8,8 @@ class Libro {
   final String descripcion;
   final double calificacion;
   final int lectores;
-  final List<String> comentarios;
-  final List<String> reacciones;
+  final List<String> reacciones; 
+  final List<Comentario> comentarios;
 
   Libro({
     required this.id,
@@ -15,57 +17,29 @@ class Libro {
     required this.autor,
     required this.portadaUrl,
     required this.descripcion,
-    this.calificacion = 0,
-    this.lectores = 0,
+    required this.calificacion,
+    required this.lectores,
+    required this.reacciones,
     this.comentarios = const [],
-    this.reacciones = const [],
   });
 
   factory Libro.fromJson(Map<String, dynamic> json) {
-    final volumeInfo = json['volumeInfo'] ?? {};
-    final imageLinks = volumeInfo['imageLinks'] ?? {};
     return Libro(
       id: json['id'] ?? '',
-      titulo: volumeInfo['title'] ?? 'Sin título',
-      autor: (volumeInfo['authors'] != null && volumeInfo['authors'] is List)
-          ? (volumeInfo['authors'] as List).join(', ')
-          : 'Autor desconocido',
-      descripcion: volumeInfo['description'] ?? 'Sin descripción',
-      portadaUrl: imageLinks['thumbnail'] ?? '',
-      calificacion: 0,
-      lectores: 0,
-      comentarios: [],
-      reacciones: [],
+      titulo: json['titulo'] ?? '',
+      autor: json['autor'] ?? '',
+      portadaUrl: json['portadaUrl'] ?? '',
+      descripcion: json['descripcion'] ?? '',
+      calificacion: (json['calificacion'] ?? 0).toDouble(),
+      lectores: json['lectores'] ?? 0,
+      reacciones: List<String>.from(json['reacciones'] ?? []),
+      comentarios: (json['comentarios'] as List<dynamic>? ?? [])
+          .map((item) => Comentario.fromMap(Map<String, dynamic>.from(item)))
+          .toList(),
     );
   }
 
-  // Método copyWith
-  Libro copyWith({
-    String? id,
-    String? titulo,
-    String? autor,
-    String? portadaUrl,
-    String? descripcion,
-    double? calificacion,
-    int? lectores,
-    List<String>? comentarios,
-    List<String>? reacciones,
-  }) {
-    return Libro(
-      id: id ?? this.id,
-      titulo: titulo ?? this.titulo,
-      autor: autor ?? this.autor,
-      portadaUrl: portadaUrl ?? this.portadaUrl,
-      descripcion: descripcion ?? this.descripcion,
-      calificacion: calificacion ?? this.calificacion,
-      lectores: lectores ?? this.lectores,
-      comentarios: comentarios ?? this.comentarios,
-      reacciones: reacciones ?? this.reacciones,
-    );
-  }
-
-  // Método toMap
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'titulo': titulo,
@@ -74,12 +48,23 @@ class Libro {
       'descripcion': descripcion,
       'calificacion': calificacion,
       'lectores': lectores,
-      'comentarios': comentarios,
       'reacciones': reacciones,
+      'comentarios': comentarios.map((c) => c.toMap()).toList(),
     };
   }
-  
-  Map<String, dynamic> toJson() {
-    return toMap(); 
+
+  Libro copyWith({String? id, String? titulo, String? autor, String? portadaUrl, String? descripcion, double? calificacion, int? lectores, List<String>? reacciones, List<Comentario>? comentarios}) {
+    return Libro(
+      id: id ?? this.id,
+      titulo: titulo ?? this.titulo,
+      autor: autor ?? this.autor,
+      portadaUrl: portadaUrl ?? this.portadaUrl,
+      descripcion: descripcion ?? this.descripcion,
+      calificacion: calificacion ?? this.calificacion,
+      lectores: lectores ?? this.lectores,
+      reacciones: reacciones ?? this.reacciones,
+      comentarios: comentarios ?? this.comentarios,
+    );
   }
 }
+

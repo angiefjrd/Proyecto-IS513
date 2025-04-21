@@ -11,11 +11,11 @@ class LibroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Asegúrate de que el book se pasa correctamente
+        
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => DetailPage(book: book), // Pasando el book aquí
+            builder: (_) => DetailPage(book: book), // Pasando el libro 
           ),
         );
       },
@@ -34,7 +34,10 @@ class LibroCard extends StatelessWidget {
                     height: 150,
                     width: double.infinity,
                   )
-                : const Placeholder(fallbackHeight: 150), // Usar un Placeholder si no hay imagen
+                : Container(height: 150,
+                    child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                ),
+
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(

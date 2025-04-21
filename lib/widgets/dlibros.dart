@@ -21,7 +21,7 @@ class DLibro extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Portada del libro (¡sin ClipRRect ni PhysicalModel!)
+              
               Container(
                 width: 80,
                 height: 120,
@@ -37,7 +37,7 @@ class DLibro extends StatelessWidget {
                     : const Icon(Icons.book, size: 40),
               ),
               const SizedBox(width: 16),
-              // Detalles del libro
+              
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

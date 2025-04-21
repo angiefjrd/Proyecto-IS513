@@ -25,18 +25,17 @@ class Controller extends GetxController {
     try {
       isLoading.value = true;
       
-      // En una aplicación real, esto vendría de Firestore
       if (FirebaseAuth.instance.currentUser != null) {
         final snapshot = await FirebaseFirestore.instance.collection('libros').get();
         
         final librosData = snapshot.docs.map((doc) {
           final data = doc.data();
-          return Libro.fromJson(data);  // Cambié fromMap por fromJson
+          return Libro.fromJson(data);  
         }).toList();
         
         libros.assignAll(librosData);
       } else {
-        // Datos de muestra para demostración
+        // Datos de muestra 
         libros.assignAll([
           Libro(
             id: '1',
@@ -117,27 +116,27 @@ class Controller extends GetxController {
     if (categoria == 'Todos') {
       return libros;
     } else {
-      return libros.where((libro) => libro.reacciones.contains(categoria)).toList(); // Ajuste de filtro por reacciones
+      return libros.where((libro) => libro.reacciones.contains(categoria)).toList(); 
     }
   }
 
   void agregarLibro(Libro libro) {
     if (FirebaseAuth.instance.currentUser != null) {
-      // En una app real, esto se guardaría en Firestore
-      FirebaseFirestore.instance.collection('libros').add(libro.toJson());  // Cambié toMap por toJson
+      
+      FirebaseFirestore.instance.collection('libros').add(libro.toJson());  
     }
     libros.add(libro);
   }
 
   void agregarObraArte(Arte obraArte) {
     if (FirebaseAuth.instance.currentUser != null) {
-      // En una app real, esto se guardaría en Firestore
+    
       FirebaseFirestore.instance.collection('arte').add(obraArte.toMap());
     }
     obrasArte.add(obraArte);
   }
 
-  void agregarComentario(String libroId, String textoComentario) {
+  void agregarComentario(String libroId, String textoComentario) async {
     final index = libros.indexWhere((libro) => libro.id == libroId);
     if (index != -1) {
       final libro = libros[index];
@@ -151,13 +150,12 @@ class Controller extends GetxController {
       );
       
       final libroActualizado = libro.copyWith(
-        comentarios: [...libro.comentarios, nuevoComentario.toMap()],
+        comentarios: [...libro.comentarios, nuevoComentario],
       );
       
       libros[index] = libroActualizado;
       libros.refresh();
       
-      // En una app real, esto se guardaría en Firestore
       if (FirebaseAuth.instance.currentUser != null) {
         FirebaseFirestore.instance
             .collection('libros')
@@ -167,27 +165,23 @@ class Controller extends GetxController {
     }
   }
   
-  void agregarReaccion(String libroId, String reaccion) {
-    final index = libros.indexWhere((libro) => libro.id == libroId);
-    if (index != -1) {
-      final libro = libros[index];
-      
-      if (!libro.reacciones.contains(reaccion)) {
-        final libroActualizado = libro.copyWith(
-          reacciones: [...libro.reacciones, reaccion],
-        );
+  void agregarReaccion(String libroId, String reaccion) async {
+    final docRef = FirebaseFirestore.instance.collection('libros').doc(libroId);
+
+    try {
+      final docSnapshot = await docRef.get();
+      if (docSnapshot.exists) {
         
-        libros[index] = libroActualizado;
-        libros.refresh();
-        
-        // En una app real, esto se guardaría en Firestore
-        if (FirebaseAuth.instance.currentUser != null) {
-          FirebaseFirestore.instance
-              .collection('libros')
-              .doc(libroId)
-              .update({'reacciones': FieldValue.arrayUnion([reaccion])});
+        List<String> reacciones = List<String>.from(docSnapshot['reacciones'] ?? []);
+
+        if (!reacciones.contains(reaccion)) {
+          reacciones.add(reaccion);
+
+          await docRef.update({'reacciones': reacciones});
         }
       }
+    } catch (e) {
+      print("Error al agregar la reacción: $e");
     }
   }
 }

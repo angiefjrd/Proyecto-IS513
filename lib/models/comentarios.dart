@@ -10,10 +10,26 @@ class Comentario {
     required this.autor,
     required this.texto,
     required this.fecha,
-    this.avatarUrl = '',
+    required this.avatarUrl,
   });
 
-  String fechaFormateada() {
-    return "${fecha.day}/${fecha.month}/${fecha.year}";
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'autor': autor,
+      'texto': texto,
+      'fecha': fecha.toString(),
+      'avatarUrl': avatarUrl,
+    };
+  }
+
+  factory Comentario.fromMap(Map<String, dynamic> map) {
+    return Comentario(
+      id: map['id'] ?? '',
+      autor: map['autor'] ?? '',
+      texto: map['texto'] ?? '',
+      fecha: DateTime.parse(map['fecha']),
+      avatarUrl: map['avatarUrl'] ?? '',
+    );
   }
 }

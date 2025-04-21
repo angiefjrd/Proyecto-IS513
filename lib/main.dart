@@ -13,7 +13,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Inicializa GetX controller
+  
   Get.put(Controller());
 
   runApp(const MyApp());
@@ -27,18 +27,18 @@ class MyApp extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Manejamos el estado de carga
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator(); // O alguna pantalla de carga
+          return const CircularProgressIndicator(); 
         }
 
-        // Configuración del router con validación de datos del usuario
-        return GetMaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          title: 'WriterHub',
-          theme: appTheme,
-          routerConfig: Rutas.configurarRutas(snapshot.data), // Aquí se pasa snapshot.data
-        );
+       return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'WriterHub',
+      theme: appTheme,
+      routerConfig: Rutas.configurarRutas(snapshot.data),
+);
+
       },
     );
   }

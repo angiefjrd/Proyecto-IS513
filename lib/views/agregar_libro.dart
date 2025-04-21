@@ -16,6 +16,7 @@ class _AgregarLibroPantallaState extends State<AgregarLibro> {
   final TextEditingController _autorController = TextEditingController();
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _portadaUrlController = TextEditingController();
+  String? _selectedReaction; 
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +74,23 @@ class _AgregarLibroPantallaState extends State<AgregarLibro> {
                 },
               ),
               const SizedBox(height: 20),
+              DropdownButton<String>(
+                value: _selectedReaction,
+                hint: const Text('Selecciona una reacción'),
+                items: <String>['me gusta', 'increíble', 'fascinante']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedReaction = newValue;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
@@ -84,6 +102,7 @@ class _AgregarLibroPantallaState extends State<AgregarLibro> {
                       portadaUrl: _portadaUrlController.text,
                       calificacion: 0,
                       lectores: 0,
+                      reacciones: _selectedReaction != null ? [_selectedReaction!] : [], // Agregar la reacción
                     );
                     controlador.agregarLibro(nuevoLibro);
                     Navigator.pop(context);

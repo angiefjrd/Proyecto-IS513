@@ -14,4 +14,25 @@ class Arte {
     required this.imagenUrl,
     required this.descripcion,
   });
+
+  factory Arte.fromMap(String id, Map<String, dynamic> map) {
+    return Arte(
+      id: id,
+      libroId: map['libroId'] ?? '',
+      titulo: map['titulo'] ?? '',
+      artista: map['artista'] ?? '',
+      imagenUrl: map['imagenUrl'] ?? '',
+      descripcion: map['descripcion'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'libroId': libroId,
+      'titulo': titulo,
+      'artista': artista,
+      'imagenUrl': imagenUrl,
+      'descripcion': descripcion,
+    };
+  }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/controller.dart';
-import '../models/comentarios.dart';
 
 class DetalleLibroPage extends StatefulWidget {
   final String libroId;
