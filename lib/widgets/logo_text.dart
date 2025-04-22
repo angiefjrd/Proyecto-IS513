@@ -16,7 +16,7 @@ class LogoText extends StatelessWidget {
         Text(
           'Writer',
           style: TextStyle(
-            color: const Color.fromRGBO(0, 0, 0, 1),
+            color: const Color.fromRGBO(255, 255, 255, 1),
             fontWeight: FontWeight.bold,
             fontSize: fontSize,
             fontFamily: 'Arial',
@@ -32,7 +32,7 @@ class LogoText extends StatelessWidget {
           child: Text(
             'hub',
             style: TextStyle(
-              color: const Color.fromRGBO(255, 255, 255, 1),
+              color: const Color.fromRGBO(0, 0, 0, 1),
               fontWeight: FontWeight.bold,
               fontSize: fontSize * 0.85, // slightly smaller for contrast
               fontFamily: 'Arial',

@@ -33,9 +33,14 @@ class _SignUpPageState extends State<SignUpPage> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-      print(userCredential.user?.uid);
+      debugPrint(userCredential.user?.uid);
+      ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('La cuenta se ha creado exitosamente!'),
+    ),
+  );
     } on FirebaseAuthException catch (e) {
-      print(e.message);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? 'se ha producido un error')));
     }
   }
 
@@ -60,7 +65,8 @@ class _SignUpPageState extends State<SignUpPage> {
               const SizedBox(height: 10),
               const SizedBox(height: 20),
               TextFormField(
-                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                controller: emailController, 
                 decoration: const InputDecoration(
                   hintText: 'Email',
                 ),

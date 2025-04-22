@@ -36,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
       if (userCredential.user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const MyHomePage()),
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -67,6 +67,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 30),
               TextFormField(
+                keyboardType: TextInputType.emailAddress,
                 controller: emailController,
                 decoration: const InputDecoration(
                   hintText: 'Email',

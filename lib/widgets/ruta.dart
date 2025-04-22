@@ -27,7 +27,7 @@ class Rutas {
       routes: [
         GoRoute(
           path: '/',
-          builder: (context, state) => const MyHomePage(),
+          builder: (context, state) => const HomePage(),
           routes: [
             GoRoute(
               path: 'libro/:id',
