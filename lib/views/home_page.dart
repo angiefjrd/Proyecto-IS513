@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:writerhub/models/libro.dart';
 import 'package:writerhub/widgets/botton_nav.dart';
@@ -7,24 +7,47 @@ import '../widgets/book_card.dart';
 import '../services/api_services.dart';
 import '../views/perfil_page.dart';
 
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-
-  final ApiService _apiService = ApiService();
-  late Future<List<Libro>> _booksFuture;
+class _HomePageState extends State<HomePage> {
+  late Future<Map<String, List<Libro>>> _groupedBooksFuture;
 
   @override
   void initState() {
     super.initState();
-    // Cargar los libros desde la API
-    _booksFuture = _apiService.fetchBooks(query: 'fiction'); 
+    _groupedBooksFuture = fetchAndGroupBooks();
+  }
+
+  Future<List<Libro>> fetchBooksFromFirebase() async {
+    final snapshot = await FirebaseFirestore.instance.collection('libros').get();
+    return snapshot.docs.map((doc) => Libro.fromJson(doc.data())).toList();
+  }
+
+  Map<String, List<Libro>> groupBooksByGenre(List<Libro> books) {
+    final Map<String, List<Libro>> grouped = {};
+
+    for (final book in books) {
+      final genres = (book as dynamic).genres ?? ['default']; // if you added genres to your model
+
+      for (final genre in genres) {
+        if (!grouped.containsKey(genre)) {
+          grouped[genre] = [];
+        }
+        grouped[genre]!.add(book);
+      }
+    }
+
+    return grouped;
+  }
+
+  Future<Map<String, List<Libro>>> fetchAndGroupBooks() async {
+    final books = await fetchBooksFromFirebase();
+    return groupBooksByGenre(books);
   }
 
   @override
@@ -37,17 +60,16 @@ class _MyHomePageState extends State<MyHomePage> {
           IconButton(
             onPressed: () {
               Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfilePage()),
-            );
-          },
-        icon: const Icon(Icons.account_circle),
-        ),
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            },
+            icon: const Icon(Icons.account_circle),
+          ),
         ],
       ),
-        //FirebaseAuth.instance.signOut();
-      body: FutureBuilder<List<Libro>>(
-        future: _booksFuture, // Cargar los libros
+      body: FutureBuilder<Map<String, List<Libro>>>(
+        future: _groupedBooksFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -55,25 +77,42 @@ class _MyHomePageState extends State<MyHomePage> {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No se encontraron libros.'));
-          } else {
-            final books = snapshot.data!;
-
-            // Si los libros se cargaron correctamente, mostrar el GridView
-            return GridView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: books.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.7,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemBuilder: (context, index) {
-                
-                return LibroCard(book: books[index]);
-              },
-            );
           }
+
+          final groupedBooks = snapshot.data!;
+
+          return ListView(
+            children: groupedBooks.entries.map((entry) {
+              final genre = entry.key;
+              final books = entry.value;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Text(
+                      genre[0].toUpperCase() + genre.substring(1), // Capitalize
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 250,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: books.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: LibroCard(book: books[index]),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          );
         },
       ),
       bottomNavigationBar: const BottomNav(),
