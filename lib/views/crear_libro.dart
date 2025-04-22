@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart' as path;
 import 'package:writerhub/widgets/controller.dart';
 import '../models/libro.dart';
 import 'crear_capitulo.dart';
+import 'package:file_picker/file_picker.dart';
 
 class CrearLibroPage extends StatefulWidget {
-  const CrearLibroPage({super.key});
+  const CrearLibroPage({Key? key}) : super(key: key);
 
   @override
-  State<CrearLibroPage> createState() => _CrearLibroPageState();
+  _CrearLibroPageState createState() => _CrearLibroPageState();
 }
 
 class _CrearLibroPageState extends State<CrearLibroPage> {
@@ -18,10 +22,20 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
   final _autorController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _portadaUrlController = TextEditingController();
-  final _contenidoController = TextEditingController();
 
-  String _tipoEscrituraSeleccionado = 'directa';
-  bool _esEnEmision = false;
+  String _tipoEscrituraSeleccionado = 'completo';
+  bool _isSubmitting = false;
+  PlatformFile? _archivoSeleccionado;
+  double _uploadProgress = 0.0;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  final List<String> _generosDisponibles = [
+    'Fantasía', 'Ciencia Ficción', 'Romance', 'Terror', 'Misterio', 'Aventura', 'Drama', 'Comedia', 'Poesía',
+  ];
+
+  final List<String> _generosSeleccionados = [];
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +46,16 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
       appBar: AppBar(
         title: const Text('Crear Nuevo Libro'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: _mostrarAyuda,
-          ),
+          if (_isSubmitting && _uploadProgress > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: Center(
+                child: Text(
+                  '${(_uploadProgress * 100).toStringAsFixed(0)}%',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -47,10 +67,10 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
             children: [
               _buildSeccionBasica(),
               _buildSelectorMetodoEscritura(),
-              if (_tipoEscrituraSeleccionado == 'directa') _buildEscrituraDirecta(),
-              if (_tipoEscrituraSeleccionado == 'capitulos') _buildPublicacionPorCapitulos(),
-              if (_tipoEscrituraSeleccionado == 'importar') _buildImportarArchivo(),
+              if (_tipoEscrituraSeleccionado == 'completo') _buildImportarArchivo(),
+              const SizedBox(height: 16),
               _buildBotonPublicacion(controlador, user),
+              if (_isSubmitting && _uploadProgress > 0) _buildProgressIndicator(),
             ],
           ),
         ),
@@ -60,244 +80,294 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
 
   Widget _buildSeccionBasica() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Text(
+          'Información Básica',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
         TextFormField(
           controller: _tituloController,
-          decoration: const InputDecoration(
-            labelText: 'Título del Libro',
-            border: OutlineInputBorder(),
-            hintText: 'Ej: El secreto de las estrellas',
-          ),
-          validator: (value) =>
-              (value == null || value.isEmpty) ? 'Por favor ingresa un título' : null,
+          decoration: const InputDecoration(labelText: 'Título'),
+          validator: (value) => value == null || value.isEmpty ? 'Ingrese el título' : null,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         TextFormField(
           controller: _autorController,
-          decoration: const InputDecoration(
-            labelText: 'Autor',
-            border: OutlineInputBorder(),
-            hintText: 'Tu nombre o seudónimo',
-          ),
-          validator: (value) =>
-              (value == null || value.isEmpty) ? 'Por favor ingresa el autor' : null,
+          decoration: const InputDecoration(labelText: 'Autor'),
+          validator: (value) => value == null || value.isEmpty ? 'Ingrese el autor' : null,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         TextFormField(
           controller: _descripcionController,
-          decoration: const InputDecoration(
-            labelText: 'Descripción breve',
-            border: OutlineInputBorder(),
-            hintText: 'Resumen atractivo de tu obra (máx. 200 caracteres)',
-          ),
           maxLines: 3,
-          maxLength: 200,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Por favor ingresa una descripción';
-            } else if (value.length > 200) {
-              return 'La descripción es demasiado larga';
-            }
-            return null;
-          },
+          decoration: const InputDecoration(labelText: 'Descripción'),
+          validator: (value) => value == null || value.isEmpty ? 'Ingrese la descripción' : null,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         TextFormField(
           controller: _portadaUrlController,
-          decoration: const InputDecoration(
-            labelText: 'URL de la portada (opcional)',
-            border: OutlineInputBorder(),
-            hintText: 'https://ejemplo.com/portada.jpg',
-          ),
+          decoration: const InputDecoration(labelText: 'URL de portada (opcional)'),
         ),
-        const SizedBox(height: 16),
+        _buildSelectorGeneros(),
       ],
     );
   }
 
-  Widget _buildSelectorMetodoEscritura() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Método de escritura', style: TextStyle(fontWeight: FontWeight.bold)),
-            RadioListTile<String>(
-              title: const Text('Escribir directamente'),
-              subtitle: const Text('Escribe tu historia completa aquí mismo'),
-              value: 'directa',
-              groupValue: _tipoEscrituraSeleccionado,
-              onChanged: (value) {
-                setState(() {
-                  _tipoEscrituraSeleccionado = value!;
-                  _esEnEmision = false;
-                });
-              },
-            ),
-            RadioListTile<String>(
-              title: const Text('Publicar por capítulos'),
-              subtitle: const Text('Irás añadiendo capítulos progresivamente'),
-              value: 'capitulos',
-              groupValue: _tipoEscrituraSeleccionado,
-              onChanged: (value) {
-                setState(() {
-                  _tipoEscrituraSeleccionado = value!;
-                  _esEnEmision = true;
-                });
-              },
-            ),
-            RadioListTile<String>(
-              title: const Text('Importar archivo'),
-              subtitle: const Text('Sube un documento con tu historia'),
-              value: 'importar',
-              groupValue: _tipoEscrituraSeleccionado,
-              onChanged: (value) {
-                setState(() {
-                  _tipoEscrituraSeleccionado = value!;
-                  _esEnEmision = false;
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEscrituraDirecta() {
+  Widget _buildSelectorGeneros() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _contenidoController,
-          decoration: const InputDecoration(
-            labelText: 'Contenido completo del libro',
-            border: OutlineInputBorder(),
-            alignLabelWithHint: true,
-          ),
-          maxLines: 15,
-          validator: (value) {
-            if (_tipoEscrituraSeleccionado == 'directa' &&
-                (value == null || value.isEmpty)) {
-              return 'Por favor escribe el contenido del libro';
-            }
-            return null;
-          },
+        const Text(
+          'Selecciona los géneros',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Text(
-          'Puedes escribir tu historia directamente aquí. Recuerda guardar con frecuencia.',
-          style: Theme.of(context).textTheme.bodySmall,
+        Wrap(
+          spacing: 8,
+          children: _generosDisponibles.map((genero) {
+            return FilterChip(
+              label: Text(genero),
+              selected: _generosSeleccionados.contains(genero),
+              onSelected: (bool seleccionado) {
+                setState(() {
+                  if (seleccionado) {
+                    _generosSeleccionados.add(genero);
+                  } else {
+                    _generosSeleccionados.remove(genero);
+                  }
+                });
+              },
+            );
+          }).toList(),
         ),
       ],
     );
   }
 
-  Widget _buildPublicacionPorCapitulos() {
+  // Método para seleccionar el tipo de escritura
+  Widget _buildSelectorMetodoEscritura() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
-        Card(
-          color: Colors.blue[50],
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: const [
-                Icon(Icons.timelapse, size: 40, color: Colors.blue),
-                SizedBox(height: 8),
-                Text('Publicación por capítulos', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Text(
-                  'Después de crear el libro, podrás añadir capítulos uno por uno.',
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
+        const Text(
+          'Selecciona el tipo de escritura',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _tipoEscrituraSeleccionado,
+          onChanged: (value) {
+            setState(() {
+              _tipoEscrituraSeleccionado = value ?? 'completo';
+            });
+          },
+          items: <String>['completo', 'capitulos']
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          decoration: const InputDecoration(labelText: 'Tipo de escritura'),
         ),
       ],
     );
   }
 
+  // Método para importar archivo
   Widget _buildImportarArchivo() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.upload_file),
-          label: const Text('Seleccionar archivo'),
-          onPressed: _seleccionarArchivo,
+        const Text(
+          'Importar archivo',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Text(
-          'Formatos soportados: .docx, .txt, .pdf',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBotonPublicacion(Controller controlador, User? user) {
-    return Column(
-      children: [
-        const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: () => _publicarLibro(controlador, user),
-          style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-          child: const Text('Publicar libro'),
+          onPressed: _seleccionarArchivo,
+          child: const Text('Seleccionar archivo'),
         ),
+        if (_archivoSeleccionado != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              'Archivo seleccionado: ${_archivoSeleccionado!.name}',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
       ],
     );
   }
 
-  void _mostrarAyuda() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Ayuda'),
-        content: const Text(
-          'Selecciona el método de escritura que prefieras. Puedes escribir directamente, importar un archivo o comenzar por capítulos.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Entendido')),
-        ],
-      ),
-    );
+  Future<void> _seleccionarArchivo() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['docx', 'txt', 'pdf', 'epub'],
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        setState(() {
+          _archivoSeleccionado = result.files.first;
+        });
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'No se pudo seleccionar el archivo: ${e.toString()}');
+    }
   }
 
-  void _seleccionarArchivo() {
-    // Implementación futura: selector de archivos
-    Get.snackbar('Función no disponible', 'Pronto podrás importar archivos desde tu dispositivo.');
+  Future<String> _subirArchivo(PlatformFile archivo) async {
+    try {
+      if (archivo.bytes == null) {
+        throw Exception('El archivo no contiene datos');
+      }
+
+      final extension = path.extension(archivo.name).replaceFirst('.', '');
+      final ref = _storage.ref().child(
+          'libros/${DateTime.now().millisecondsSinceEpoch}.$extension');
+
+      final metadata = SettableMetadata(
+        contentType: _getMimeType(extension),
+        customMetadata: {
+          'uploadedBy': FirebaseAuth.instance.currentUser?.uid ?? 'anon',
+          'originalName': archivo.name,
+        },
+      );
+
+      final uploadTask = ref.putData(archivo.bytes!, metadata);
+      
+      uploadTask.snapshotEvents.listen((taskSnapshot) {
+        setState(() {
+          _uploadProgress = taskSnapshot.bytesTransferred / taskSnapshot.totalBytes;
+        });
+      });
+
+      final snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      throw Exception('Error al subir archivo: $e');
+    }
   }
 
-  void _publicarLibro(Controller controlador, User? user) {
-    if (_formKey.currentState!.validate()) {
+  String _getMimeType(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'epub':
+        return 'application/epub+zip';
+      case 'txt':
+        return 'text/plain';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
+  Future<void> _publicarLibro(Controller controlador, User? user) async {
+    if (!_formKey.currentState!.validate()) return;
+    if (user == null) {
+      Get.snackbar('Error', 'Debes iniciar sesión para publicar');
+      return;
+    }
+
+    if (_generosSeleccionados.isEmpty) {
+      Get.snackbar('Error', 'Debes seleccionar al menos un género');
+      return;
+    }
+
+    if (_tipoEscrituraSeleccionado == 'completo' && _archivoSeleccionado == null) {
+      Get.snackbar('Error', 'Debes seleccionar un archivo para el libro completo');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _uploadProgress = 0.0;
+    });
+
+    try {
+      String? archivoUrl;
+      String? nombreArchivo;
+
+      if (_tipoEscrituraSeleccionado == 'completo' && _archivoSeleccionado != null) {
+        archivoUrl = await _subirArchivo(_archivoSeleccionado!);
+        nombreArchivo = _archivoSeleccionado!.name;
+      }
+
       final libro = Libro(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: _firestore.collection('libros').doc().id,
         titulo: _tituloController.text.trim(),
         autor: _autorController.text.trim(),
-        autorId: user?.uid ?? 'desconocido',
-        portadaUrl: _portadaUrlController.text.trim(),
+        autorId: user.uid,
+        portadaUrl: _portadaUrlController.text.trim().isEmpty? '' 
+        : _portadaUrlController.text.trim(),
         descripcion: _descripcionController.text.trim(),
-        contenidoCompleto: _tipoEscrituraSeleccionado == 'directa'
-            ? _contenidoController.text.trim()
-            : null,
-        esEnEmision: _esEnEmision,
+        archivoUrl: archivoUrl,
+        nombreArchivo: nombreArchivo,
+        esEnEmision: _tipoEscrituraSeleccionado == 'capitulos',
         fechaCreacion: DateTime.now(),
+        ultimaActualizacion: DateTime.now(),
         calificacion: 0,
         lectores: 0,
         reacciones: [],
         comentarios: [],
+        capitulos: _tipoEscrituraSeleccionado == 'capitulos' ? [] : null,
+        genres: _generosSeleccionados,
       );
 
+      await _firestore.collection('libros').doc(libro.id).set(libro.toJson());
       controlador.agregarLibro(libro);
 
       if (_tipoEscrituraSeleccionado == 'capitulos') {
-        Get.to(() => CrearCapituloPage(libroId: libro.id, tituloLibro: libro.titulo, numeroCapitulo: 1));
+        Get.off(() => CrearCapituloPage(
+              libroId: libro.id,
+              tituloLibro: libro.titulo,
+              numeroCapitulo: 1,
+            ));
       } else {
         Get.back();
+        Get.snackbar('Éxito', 'Libro publicado correctamente');
       }
+    } catch (e) {
+      Get.snackbar('Error', 'Publicación fallida: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+        _uploadProgress = 0.0;
+      });
     }
+  }
+
+  Widget _buildBotonPublicacion(Controller controlador, User? user) {
+    return ElevatedButton(
+      onPressed: _isSubmitting ? null : () => _publicarLibro(controlador, user),
+      child: _isSubmitting
+          ? const CircularProgressIndicator()
+          : const Text('Publicar Libro'),
+    );
+  }
+
+  Widget _buildProgressIndicator() {
+    return LinearProgressIndicator(
+      value: _uploadProgress,
+      backgroundColor: Colors.grey[200],
+      color: Colors.blue,
+    );
+  }
+
+  @override
+  void dispose() {
+    _tituloController.dispose();
+    _autorController.dispose();
+    _descripcionController.dispose();
+    _portadaUrlController.dispose();
+    super.dispose();
   }
 }

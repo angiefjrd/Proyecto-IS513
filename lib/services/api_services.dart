@@ -27,6 +27,8 @@ class ApiService {
             reacciones: [], 
             fechaCreacion: DateTime.now(), 
             autorId: 'google-books', 
+            ultimaActualizacion: DateTime.now(),
+            genres: List<String>.from(volumeInfo['categories'] ?? []),
           );
         }).toList();
       } else {
