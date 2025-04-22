@@ -10,15 +10,10 @@ class LibroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetailPage(book: book), // Pasando el libro 
-          ),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => DetailPage(book: book)),
+      ),
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(
@@ -27,40 +22,60 @@ class LibroCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            book.portadaUrl.isNotEmpty
-                ? Image.network(
-                    book.portadaUrl,
-                    fit: BoxFit.cover,
-                    height: 150,
-                    width: double.infinity,
-                  )
-                : Container(height: 150,
-                    child: const Icon(Icons.image, size: 50, color: Colors.grey),
-                ),
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                book.titulo,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 2,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-              child: Text(
-                'by ${book.autor}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
+            _buildPortada(),
+            _buildTitulo(),
+            _buildAutor(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPortada() {
+    final hasPortada = book.portadaUrl?.isNotEmpty ?? false;
+    
+    return Container(
+      height: 150,
+      width: double.infinity,
+      child: hasPortada
+          ? Image.network(
+              book.portadaUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildPlaceholder(),
+            )
+          : _buildPlaceholder(),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return const Center(
+      child: Icon(Icons.image, size: 50, color: Colors.grey),
+    );
+  }
+
+  Widget _buildTitulo() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Text(
+        book.titulo ?? 'Título no disponible',
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 2,
+      ),
+    );
+  }
+
+  Widget _buildAutor() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+      child: Text(
+        'by ${book.autor ?? 'Autor desconocido'}',
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
     );
   }
