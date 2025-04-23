@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:writerhub/views/galeria.dart';
+import 'package:writerhub/views/galeria_page.dart'; // Asegúrate de tener esta importación
 import '../widgets/controller.dart';
 import '../models/arte.dart';
 
@@ -27,6 +27,7 @@ class ArtePantalla extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // Formulario para añadir arte
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -66,7 +67,7 @@ class ArtePantalla extends StatelessWidget {
                           descripcion: descripcionController.text,
                           imagenUrl: imagenUrlController.text,
                           artistaId: artistaController.text.toLowerCase().replaceAll(' ', '_'),
-                           fechaCreacion: DateTime.now(), 
+                          fechaCreacion: DateTime.now(),
                         );
                         controlador.agregarObraArte(nuevaObra);
                         tituloController.clear();
@@ -81,6 +82,8 @@ class ArtePantalla extends StatelessWidget {
               ),
             ),
             const Divider(),
+            
+            // Mostrar cantidad de arte
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
@@ -88,6 +91,8 @@ class ArtePantalla extends StatelessWidget {
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
+            
+            // Si no hay arte
             if (artesDelLibro.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(16),
@@ -98,8 +103,29 @@ class ArtePantalla extends StatelessWidget {
                 child: ListView.builder(
                   itemCount: artesDelLibro.length,
                   itemBuilder: (context, index) {
-                    return Galeria(arte: artesDelLibro[index],libroId: libroId,);
+                    final arte = artesDelLibro[index];
+                    return ListTile(
+                      leading: Image.network(arte.imagenUrl, width: 50, fit: BoxFit.cover),
+                      title: Text(arte.titulo),
+                      subtitle: Text('Por ${arte.artista}'),
+                    );
                   },
+                ),
+              ),
+            
+            // Botón para ver la galería completa
+            if (artesDelLibro.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.to(() => GaleriaArtePage(
+                      libroId: libroId,
+                      tituloLibro: libro.titulo,
+                      artes: artesDelLibro,
+                    ));
+                  },
+                  child: const Text('Ver toda la galería'),
                 ),
               ),
           ],

@@ -9,9 +9,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 class GaleriaArtePage extends StatelessWidget {
   final String libroId;
   final String tituloLibro;
+  final List<Arte> artes;
 
   const GaleriaArtePage({
     super.key, 
+    required this.artes,
     required this.libroId,
     required this.tituloLibro,
   });
