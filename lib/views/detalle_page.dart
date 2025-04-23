@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:writerhub/models/libro.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/libro.dart';
 
 class BookDetailPage extends StatefulWidget {
   final Libro libro;
@@ -13,13 +14,16 @@ class BookDetailPage extends StatefulWidget {
 
 class _BookDetailPageState extends State<BookDetailPage> {
   late final String? _currentUserId;
+
   @override
-   void initState() {
+  void initState() {
     super.initState();
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
   }
 
   bool get isAuthor => _currentUserId == widget.libro.autorId;
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -31,7 +35,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Portada del libro
+            // Portada
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -89,29 +93,52 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
             const SizedBox(height: 20),
 
-            // Fecha de creación
+            // Fecha
             Text(
               'Creado el: ${widget.libro.fechaCreacion}',
               style: const TextStyle(color: Colors.grey),
             ),
+
             const SizedBox(height: 20),
+
+            // Botón agregar capítulo (solo si es el autor)
             if (isAuthor)
+              Center(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text("Agregar Capítulo"),
+                  onPressed: () {
+                    final siguienteNumero = (widget.libro.capitulos?.length ?? 0) + 1;
+                    Navigator.pushNamed(
+                      context,
+                      '/crear-capitulo/${widget.libro.id}/$siguienteNumero',
+                      arguments: {
+                        'tituloLibro': widget.libro.titulo,
+                      },
+                    );
+                  },
+                ),
+              ),
+
+            const SizedBox(height: 10),
+
+            // Botón para guardar el libro
             Center(
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text("Agregar Capítulo"),
-                onPressed: () {
-                  Navigator.pushNamed(
-                  context,
-                  '/crear-capitulo/${widget.libro.id}/${widget.libro.capitulos!.length + 1}', 
-                  arguments: {
-                    'tituloLibro': widget.libro.titulo,
-                    },
+                onPressed: () async {
+                  await guardarLibroEnBiblioteca(widget.libro);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Libro guardado en tu biblioteca')),
                   );
                 },
+                icon: const Icon(Icons.bookmark),
+                label: const Text('Guardar libro'),
               ),
             ),
-            // Botón de volver
+
+            const SizedBox(height: 10),
+
+            // Botón volver
             Center(
               child: ElevatedButton.icon(
                 onPressed: () => Navigator.pop(context),
@@ -126,3 +153,21 @@ class _BookDetailPageState extends State<BookDetailPage> {
   }
 }
 
+Future<void> guardarLibroEnBiblioteca(Libro libro) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+
+  final docRef = FirebaseFirestore.instance
+      .collection('usuarios')
+      .doc(user.uid)
+      .collection('biblioteca')
+      .doc(libro.id);
+
+  await docRef.set({
+    'libroId': libro.id,
+    'titulo': libro.titulo,
+    'portadaUrl': libro.portadaUrl,
+    'autor': libro.autor,
+    'fechaGuardado': Timestamp.now(),
+  });
+}
