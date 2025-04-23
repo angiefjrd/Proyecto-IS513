@@ -103,22 +103,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
             // Botón agregar capítulo (solo si es el autor)
             if (isAuthor)
-              Center(
+            Center(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text("Agregar Capítulo"),
-                  onPressed: () {
-                    final siguienteNumero = (widget.libro.capitulos?.length ?? 0) + 1;
-                    Navigator.pushNamed(
-                      context,
-                      '/crear-capitulo/${widget.libro.id}/$siguienteNumero',
-                      arguments: {
-                        'tituloLibro': widget.libro.titulo,
-                      },
-                    );
-                  },
+                icon: const Icon(Icons.add),
+                label: const Text("Agregar Capítulo"),
+                onPressed: () => agregarCapitulo(context, widget.libro.id),  // Llamada a la función de agregar capítulo
                 ),
-              ),
+               ),
+
 
             const SizedBox(height: 10),
 
@@ -166,3 +158,99 @@ Future<void> guardarLibroEnBiblioteca(Libro libro) async {
   await docRef.set(libro.toJson());
 
 }
+
+
+ Future<void> agregarCapitulo(BuildContext context, String libroId) async {
+  final nombreController = TextEditingController();
+  final contenidoController = TextEditingController();
+
+  await showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Agregar Capítulo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nombreController,
+              decoration: const InputDecoration(labelText: 'Nombre del capítulo'),
+            ),
+            TextField(
+              controller: contenidoController,
+              decoration: const InputDecoration(labelText: 'Contenido'),
+              maxLines: 5,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final nombre = nombreController.text.trim();
+              final contenido = contenidoController.text.trim();
+
+              if (nombre.isNotEmpty && contenido.isNotEmpty) {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Debes iniciar sesión')),
+                  );
+                  return;
+                }
+
+                // Verificación de que el libroId no esté vacío
+                if (libroId.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('ID del libro es inválido')),
+                  );
+                  return;
+                }
+
+                // Referencia al documento del libro
+                final libroRef = FirebaseFirestore.instance
+                    .collection('libros')
+                    .doc(libroId);  // Se asegura de que el `libroId` no esté vacío
+
+                // Verificar si el documento de libro existe
+                final libroDoc = await libroRef.get();
+                if (!libroDoc.exists) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('El libro no existe en Firestore')),
+                  );
+                  return;
+                }
+
+                // Crear el capítulo en la subcolección
+                final capRef = libroRef.collection('capitulos').doc();  // Crea un nuevo documento para el capítulo
+
+                await capRef.set({
+                  'nombre': nombre,
+                  'contenido': contenido,
+                  'fechaCreacion': Timestamp.now(),
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Capítulo agregado')),
+                );
+
+                Navigator.pop(context);  // Cierra el diálogo
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Por favor, completa todos los campos')),
+                );
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
