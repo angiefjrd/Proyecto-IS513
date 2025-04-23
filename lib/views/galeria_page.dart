@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:writerhub/widgets/controller.dart';
 import 'package:writerhub/models/arte.dart';
 import 'package:writerhub/views/subir_arte_page.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class GaleriaArtePage extends StatelessWidget {

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:writerhub/models/libro.dart';
 import 'package:writerhub/widgets/controller.dart';
 import 'package:writerhub/views/lecturacap.dart';
-import 'package:writerhub/views/lecturalib.dart';
 import 'package:writerhub/views/crear_capitulo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:writerhub/views/clibros.dart';
@@ -101,6 +100,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
             _buildReacciones(),
             _buildSeccionCapitulos(),
             _buildComentarios(),
+            _buildSeccionGaleria(),
           ],
         ),
       ),
@@ -232,7 +232,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
     });
   }
 
-  // Agrega esta sección después de la sección de capítulos
+// Agrega esta sección después de la sección de capítulos
 Widget _buildSeccionGaleria() {
   return Padding(
     padding: const EdgeInsets.all(16),
@@ -330,6 +330,7 @@ void _mostrarDetalleObra(Arte obra) {
     ),
   );
 }
+ 
 
 
   Widget _buildComentarios() {

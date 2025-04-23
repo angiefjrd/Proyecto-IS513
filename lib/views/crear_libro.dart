@@ -160,22 +160,20 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
   }
 
   // Método para publicar el libro
-  // Reemplaza el método _publicarLibro con este:
-Future<void> _publicarLibro(Controller controlador, User? user) async {
+  // ... (toda la parte inicial igual, sin cambios)
+
+  Future<void> _publicarLibro(Controller controlador, User? user) async {
     if (!_formKey.currentState!.validate()) return;
     if (user == null) {
       Get.snackbar('Error', 'Debes iniciar sesión para publicar');
       return;
     }
 
-<<<<<<< HEAD
-=======
     if (_generosSeleccionados.isEmpty) {
       Get.snackbar('Error', 'Debes seleccionar al menos un género');
       return;
     }
 
->>>>>>> d7325053f7850542e8c9c1dd4ba4b8c74ceca723
     setState(() {
       _isSubmitting = true;
     });
@@ -189,13 +187,7 @@ Future<void> _publicarLibro(Controller controlador, User? user) async {
         autor: _autorController.text.trim(),
         autorId: user.uid,
         vistas: 0,
-<<<<<<< HEAD
-        portadaUrl: _portadaUrlController.text.trim().isEmpty 
-            ? '' 
-            : _portadaUrlController.text.trim(),
-=======
         portadaUrl: portadaUrl ?? '',
->>>>>>> d7325053f7850542e8c9c1dd4ba4b8c74ceca723
         descripcion: _descripcionController.text.trim(),
         archivoUrl: null,
         nombreArchivo: null,
@@ -213,8 +205,7 @@ Future<void> _publicarLibro(Controller controlador, User? user) async {
       await _firestore.collection('libros').doc(libro.id).set(libro.toJson());
       controlador.agregarLibro(libro);
 
-<<<<<<< HEAD
-      // Mostrar diálogo de éxito
+      // Mostrar diálogo de éxito con opción de crear capítulos
       await Get.dialog(
         AlertDialog(
           title: const Text('¡Libro publicado!'),
@@ -232,29 +223,17 @@ Future<void> _publicarLibro(Controller controlador, User? user) async {
           actions: [
             TextButton(
               onPressed: () {
-                if (_tipoEscrituraSeleccionado == 'capitulos') {
-                  Get.off(() => CrearCapituloPage(
-                    libroId: libro.id,
-                    tituloLibro: libro.titulo,
-                    numeroCapitulo: 1,
-                  ));
-                } else {
-                  Get.back(); // Cierra el diálogo
-                  Get.back(); // Vuelve a la pantalla anterior
-                }
+                Get.off(() => CrearCapituloPage(
+                      libroId: libro.id,
+                      tituloLibro: libro.titulo,
+                      numeroCapitulo: 1,
+                    ));
               },
-              child: const Text('Aceptar'),
+              child: const Text('Crear Capítulo'),
             ),
           ],
         ),
       );
-=======
-      Get.off(() => CrearCapituloPage(
-            libroId: libro.id,
-            tituloLibro: libro.titulo,
-            numeroCapitulo: 1,
-          ));
->>>>>>> d7325053f7850542e8c9c1dd4ba4b8c74ceca723
     } catch (e) {
       Get.snackbar('Error', 'Publicación fallida: ${e.toString()}');
     } finally {
@@ -263,6 +242,7 @@ Future<void> _publicarLibro(Controller controlador, User? user) async {
       });
     }
   }
+
   // Método para crear el botón de publicación
   Widget _buildBotonPublicacion(Controller controlador, User? user) {
     return ElevatedButton(
@@ -273,20 +253,11 @@ Future<void> _publicarLibro(Controller controlador, User? user) async {
     );
   }
 
-<<<<<<< HEAD
-  // Método para mostrar el indicador de progreso
-  Widget _buildProgressIndicator() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16.0),
-      child: LinearProgressIndicator(value: _uploadProgress),
-    );
-=======
   @override
   void dispose() {
     _tituloController.dispose();
     _autorController.dispose();
     _descripcionController.dispose();
     super.dispose();
->>>>>>> d7325053f7850542e8c9c1dd4ba4b8c74ceca723
   }
 }
