@@ -12,13 +12,23 @@ class BookDetailPage extends StatefulWidget {
   State<BookDetailPage> createState() => _BookDetailPageState();
 }
 
+
+
+
+
 class _BookDetailPageState extends State<BookDetailPage> {
   late final String? _currentUserId;
+  Future<List<Map<String, dynamic>>> fetchCapitulos() async {
+  final libroRef = FirebaseFirestore.instance.collection('libros').doc(widget.libro.id);
 
+  final snapshot = await libroRef.collection('capitulos').orderBy('fechaCreacion').get();
+  return snapshot.docs.map((doc) => doc.data()).toList();
+  }
   @override
   void initState() {
     super.initState();
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
   }
 
   bool get isAuthor => _currentUserId == widget.libro.autorId;
@@ -100,6 +110,52 @@ class _BookDetailPageState extends State<BookDetailPage> {
             ),
 
             const SizedBox(height: 20),
+
+            // Capítulos
+            const Text(
+  'Capítulos',
+  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+),
+const SizedBox(height: 10),
+FutureBuilder<List<Map<String, dynamic>>>(
+  future: fetchCapitulos(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (snapshot.hasError) {
+      return Text('Error al cargar capítulos: ${snapshot.error}');
+    }
+
+    final capitulos = snapshot.data ?? [];
+
+    if (capitulos.isEmpty) {
+      return const Text('Este libro no tiene capítulos.');
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: capitulos.length,
+      itemBuilder: (context, index) {
+        final cap = capitulos[index];
+        final nombre = cap['nombre'] as String? ?? 'Capítulo ${index + 1}';
+        final contenido = cap['contenido'] as String? ?? '';
+
+        return ExpansionTile(
+          title: Text(nombre),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text(contenido),
+            ),
+          ],
+        );
+      },
+    );
+  },
+),
+const SizedBox(height: 20),
 
             // Botón agregar capítulo (solo si es el autor)
             if (isAuthor)
