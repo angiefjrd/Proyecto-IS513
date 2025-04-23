@@ -37,14 +37,6 @@ class BottomNav extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.book),
-              title: const Text('Libro completo'),
-              onTap: () {
-                Navigator.pop(context);
-                context.go('/crear-libro');
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.library_books),
               title: const Text('Libro por capítulos'),
               onTap: () {
