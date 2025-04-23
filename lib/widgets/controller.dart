@@ -110,6 +110,7 @@ class Controller extends GetxController {
     }
   }
 
+  // Eliminar una de las definiciones duplicadas de darLikeObra
   Future<void> darLikeObra({required String obraId, required String libroId}) async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -140,6 +141,16 @@ class Controller extends GetxController {
     } catch (e) {
       Get.snackbar('Error', 'No se pudo actualizar el like');
       print('Error al dar like: $e');
+    }
+  }
+
+  // Eliminar una de las definiciones duplicadas de agregarObraArte
+  Future<void> agregarObraArte(Arte obraArte) async {
+    try {
+      await FirebaseFirestore.instance.collection('arte').add(obraArte.toMap());
+      obrasArte.add(obraArte);
+    } catch (e) {
+      print('Error al agregar obra de arte: $e');
     }
   }
 
@@ -211,18 +222,10 @@ class Controller extends GetxController {
         query = query.where('libroId', isEqualTo: libroId);
       }
       final snapshot = await query.get();
-      obrasArte.assignAll(snapshot.docs.map((doc) => Arte.fromMap(doc.id, doc.data() as Map<String, dynamic>)));
+      obrasArte.assignAll(snapshot.docs.map((doc) => 
+        Arte.fromMap(doc.id, doc.data() as Map<String, dynamic>)));
     } catch (e) {
       print('Error al cargar obras de arte: $e');
-    }
-  }
-
-  Future<void> agregarObraArte(Arte obraArte) async {
-    try {
-      await FirebaseFirestore.instance.collection('arte').add(obraArte.toMap());
-      obrasArte.add(obraArte);
-    } catch (e) {
-      print('Error al agregar obra de arte: $e');
     }
   }
 }
