@@ -161,86 +161,191 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
 
   // Método para publicar el libro
   
+  // Future<void> _publicarLibro(Controller controlador, User? user) async {
+  //   if (!_formKey.currentState!.validate()) return;
+  //   if (user == null) {
+  //     Get.snackbar('Error', 'Debes iniciar sesión para publicar');
+  //     return;
+  //   }
+
+  //   if (_generosSeleccionados.isEmpty) {
+  //     Get.snackbar('Error', 'Debes seleccionar al menos un género');
+  //     return;
+  //   }
+
+  //   setState(() {
+  //     _isSubmitting = true;
+  //   });
+
+  //   try {
+  //     final portadaUrl = await _subirPortada();
+
+  //     final libro = Libro(
+  //       id: _firestore.collection('libros').doc().id,
+  //       titulo: _tituloController.text.trim(),
+  //       autor: _autorController.text.trim(),
+  //       autorId: user.uid,
+  //       vistas: 0,
+  //       portadaUrl: portadaUrl ?? '',
+  //       descripcion: _descripcionController.text.trim(),
+  //       archivoUrl: null,
+  //       nombreArchivo: null,
+  //       esEnEmision: true,
+  //       fechaCreacion: DateTime.now(),
+  //       ultimaActualizacion: DateTime.now(),
+  //       calificacion: 0,
+  //       lectores: 0,
+  //       reacciones: [],
+  //       comentarios: [],
+  //       capitulos: [],
+  //       genres: _generosSeleccionados,
+  //     );
+
+  //     await _firestore.collection('libros').doc(libro.id).set(libro.toJson());
+  //     controlador.agregarLibro(libro);
+
+  //     // Mostrar diálogo de éxito con opción de crear capítulos
+  //     await Get.dialog(
+  //       AlertDialog(
+  //         title: const Text('¡Libro publicado!'),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             const Icon(Icons.check_circle, color: Colors.green, size: 50),
+  //             const SizedBox(height: 16),
+  //             Text(
+  //               'Tu libro "${libro.titulo}" ha sido publicado exitosamente',
+  //               textAlign: TextAlign.center,
+  //             ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               Get.off(() => CrearCapituloPage(
+  //                     libroId: libro.id,
+  //                     tituloLibro: libro.titulo,
+  //                     numeroCapitulo: 1,
+  //                   ));
+  //             },
+  //             child: const Text('Crear Capítulo'),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     Get.snackbar('Error', 'Publicación fallida: ${e.toString()}');
+  //   } finally {
+  //     setState(() {
+  //       _isSubmitting = false;
+  //     });
+  //   }
+  // }
+
   Future<void> _publicarLibro(Controller controlador, User? user) async {
-    if (!_formKey.currentState!.validate()) return;
-    if (user == null) {
-      Get.snackbar('Error', 'Debes iniciar sesión para publicar');
-      return;
+  if (!_formKey.currentState!.validate()) return;
+  if (user == null) {
+    Get.snackbar('Error', 'Debes iniciar sesión para publicar');
+    return;
+  }
+
+  if (_generosSeleccionados.isEmpty) {
+    Get.snackbar('Error', 'Debes seleccionar al menos un género');
+    return;
+  }
+
+  setState(() {
+    _isSubmitting = true;
+  });
+
+  try {
+    showLoadingDialog(context);
+
+    String imageUrl = '';
+    if (_imagenPortada != null) {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('portadas/${DateTime.now().toIso8601String()}.jpg');
+      final uploadTask = await storageRef.putFile(_imagenPortada!);
+      imageUrl = await uploadTask.ref.getDownloadURL();
     }
 
-    if (_generosSeleccionados.isEmpty) {
-      Get.snackbar('Error', 'Debes seleccionar al menos un género');
-      return;
-    }
+    // Generar keywords a partir de título y descripción
+    String combinedText =
+        '${_tituloController.text} ${_descripcionController.text}';
+    List<String> keywords = combinedText
+        .split(RegExp(r'\s+'))
+        .where((word) => word.length > 3)
+        .map((word) => word.toLowerCase())
+        .toSet()
+        .toList();
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    final libroRef = _firestore.collection('libros').doc();
+    final libro = Libro(
+      id: libroRef.id,
+      titulo: _tituloController.text.trim(),
+      autor: _autorController.text.trim(),
+      autorId: user.uid,
+      vistas: 0,
+      portadaUrl: imageUrl,
+      descripcion: _descripcionController.text.trim(),
+      archivoUrl: null,
+      nombreArchivo: null,
+      esEnEmision: true,
+      fechaCreacion: DateTime.now(),
+      ultimaActualizacion: DateTime.now(),
+      calificacion: 0,
+      lectores: 0,
+      reacciones: [],
+      comentarios: [],
+      capitulos: [],
+      genres: _generosSeleccionados,
+    );
 
-    try {
-      final portadaUrl = await _subirPortada();
+    await libroRef.set(libro.toJson());
+    controlador.agregarLibro(libro);
 
-      final libro = Libro(
-        id: _firestore.collection('libros').doc().id,
-        titulo: _tituloController.text.trim(),
-        autor: _autorController.text.trim(),
-        autorId: user.uid,
-        vistas: 0,
-        portadaUrl: portadaUrl ?? '',
-        descripcion: _descripcionController.text.trim(),
-        archivoUrl: null,
-        nombreArchivo: null,
-        esEnEmision: true,
-        fechaCreacion: DateTime.now(),
-        ultimaActualizacion: DateTime.now(),
-        calificacion: 0,
-        lectores: 0,
-        reacciones: [],
-        comentarios: [],
-        capitulos: [],
-        genres: _generosSeleccionados,
-      );
+    Navigator.of(context).pop(); // Cierra el loading
 
-      await _firestore.collection('libros').doc(libro.id).set(libro.toJson());
-      controlador.agregarLibro(libro);
-
-      // Mostrar diálogo de éxito con opción de crear capítulos
-      await Get.dialog(
-        AlertDialog(
-          title: const Text('¡Libro publicado!'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 50),
-              const SizedBox(height: 16),
-              Text(
-                'Tu libro "${libro.titulo}" ha sido publicado exitosamente',
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Get.off(() => CrearCapituloPage(
-                      libroId: libro.id,
-                      tituloLibro: libro.titulo,
-                      numeroCapitulo: 1,
-                    ));
-              },
-              child: const Text('Crear Capítulo'),
+    await Get.dialog(
+      AlertDialog(
+        title: const Text('¡Libro publicado!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 50),
+            const SizedBox(height: 16),
+            Text(
+              'Tu libro "${libro.titulo}" ha sido publicado exitosamente',
+              textAlign: TextAlign.center,
             ),
           ],
         ),
-      );
-    } catch (e) {
-      Get.snackbar('Error', 'Publicación fallida: ${e.toString()}');
-    } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
-    }
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.off(() => CrearCapituloPage(
+                    libroId: libro.id,
+                    tituloLibro: libro.titulo,
+                    numeroCapitulo: 1,
+                  ));
+            },
+            child: const Text('Crear Capítulo'),
+          ),
+        ],
+      ),
+    );
+  } catch (e) {
+    Navigator.of(context).pop(); // Cierra el loading
+    Get.snackbar('Error', 'Error al publicar el libro',
+        backgroundColor: Colors.red, colorText: Colors.white);
+  } finally {
+    setState(() {
+      _isSubmitting = false;
+    });
   }
+}
+
 
   // Método para crear el botón de publicación
   Widget _buildBotonPublicacion(Controller controlador, User? user) {
@@ -259,4 +364,20 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
     _descripcionController.dispose();
     super.dispose();
   }
+}
+
+void showLoadingDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: true, 
+    builder: (BuildContext context) {
+      return const AlertDialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        content: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    },
+  );
 }
