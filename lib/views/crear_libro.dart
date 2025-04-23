@@ -306,6 +306,7 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
         titulo: _tituloController.text.trim(),
         autor: _autorController.text.trim(),
         autorId: user.uid,
+        vistas: 0,
         portadaUrl: _portadaUrlController.text.trim().isEmpty? '' 
         : _portadaUrlController.text.trim(),
         descripcion: _descripcionController.text.trim(),

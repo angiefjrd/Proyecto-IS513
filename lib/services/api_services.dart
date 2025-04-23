@@ -29,6 +29,8 @@ class ApiService {
             autorId: 'google-books', 
             ultimaActualizacion: DateTime.now(),
             genres: List<String>.from(volumeInfo['categories'] ?? []),
+            vistas: 0,
+            
           );
         }).toList();
       } else {

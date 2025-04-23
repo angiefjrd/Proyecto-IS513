@@ -19,6 +19,8 @@ class Libro {
   String? archivoUrl;
   String? nombreArchivo;
   List<String>? capitulos;
+  final int vistas;
+  final List<String> etiquetas;
 
   Libro({
     this.capitulos,
@@ -39,6 +41,9 @@ class Libro {
     required this.ultimaActualizacion,
     this.archivoUrl,
     this.nombreArchivo,
+    this.etiquetas = const [],
+    required this.vistas,
+
   });
 
   
@@ -61,6 +66,8 @@ class Libro {
       fechaCreacion: DateTime.parse(json['fechaCreacion']),
       genres: List<String>.from(json['genres'] ?? []),
       ultimaActualizacion: DateTime.parse(json['ultimaActualizacion']),
+      vistas: json['vistas'] ?? 0,
+      etiquetas: List<String>.from(json['etiquetas'] ?? []),
 
     );
   }
@@ -83,6 +90,8 @@ class Libro {
       'genres': genres, 
       'ultimaActualizacion': ultimaActualizacion.toString(),
       'capitulos': capitulos,
+      'vistas': vistas,
+      'etiquetas': etiquetas,
     };
   }
 
@@ -102,6 +111,7 @@ class Libro {
     List<Comentario>? comentarios,
     DateTime? fechaCreacion,
     List<String>? genres,
+    int? vistas,
 
   }) {
     return Libro(
@@ -120,6 +130,7 @@ class Libro {
       comentarios: comentarios ?? this.comentarios,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       genres: genres ?? this.genres,
+       vistas: vistas ?? this.vistas,
 
     );
   }

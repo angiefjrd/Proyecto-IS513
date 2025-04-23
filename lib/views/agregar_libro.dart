@@ -116,6 +116,7 @@ class _AgregarLibroPantallaState extends State<AgregarLibro> {
                           fechaCreacion: DateTime.now(),
                           genres: [],
                           ultimaActualizacion: DateTime.now(),
+                          vistas: 0,
                         );
 
                         await controlador.agregarLibro(nuevoLibro);
