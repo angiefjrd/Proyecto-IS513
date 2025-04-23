@@ -1,21 +1,18 @@
-import 'package:flutter/material.dart'; // Add this import
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:writerhub/views/lecturalib.dart';
 import '../views/home_page.dart';
 import '../views/login_page.dart';
 import '../views/signup_page.dart';
 import '../views/perfil_page.dart';
 import '../views/detalles_libro.dart';
 import '../views/agregar_libro.dart';
-import '../views/arte_pantalla.dart';
-import '../views/galeria.dart';
+import '../views/galeria_page.dart';
 import '../views/detalle_page.dart';
 import '../views/crear_libro.dart';
 import '../views/crear_capitulo.dart';
 import '../views/lecturacap.dart';
 import '../views/lecturalib.dart';
-import '../models/arte.dart';
 import '../models/libro.dart';
 import '../views/subir_arte_page.dart';
 
@@ -45,27 +42,26 @@ class Rutas {
               builder: (context, state) => const CrearLibroPage(),
             ),
             GoRoute(
-              path: 'arte/:libroId',
-              builder: (context, state) => ArtePantalla(
+              path: 'galeria/:libroId',
+              builder: (context, state) => GaleriaArtePage(
                 libroId: state.pathParameters['libroId']!,
+                tituloLibro: state.extra as String,
+                artes: [],
               ),
             ),
-            
-            
             GoRoute(
-            path: 'agregar-arte/:libroId',
-            builder: (context, state) => SubirArtePage( // Cambiado de Galeria a SubirArtePage
-            libroId: state.pathParameters['libroId']!,
-            tituloLibro: '', // Agregar título del libro o pasarlo como parámetro
+              path: 'agregar-arte/:libroId',
+              builder: (context, state) => SubirArtePage(
+                libroId: state.pathParameters['libroId']!,
+                tituloLibro: state.extra as String,
+              ),
             ),
-            ),
-
             GoRoute(
               path: 'crear-capitulo/:libroId/:numero',
               builder: (context, state) => CrearCapituloPage(
                 libroId: state.pathParameters['libroId']!,
                 numeroCapitulo: int.parse(state.pathParameters['numero']!),
-                tituloLibro: state.pathParameters['tituloLibro']!,
+                tituloLibro: state.extra as String,
               ),
             ),
             GoRoute(
@@ -92,9 +88,7 @@ class Rutas {
         ),
       ],
       redirect: (BuildContext context, GoRouterState state) {
-        final usuario = FirebaseAuth.instance.currentUser;
         final path = state.uri.path;
-
         final estaEnLogin = path == '/login' || path == '/signup';
 
         if (usuario == null && !estaEnLogin) {
@@ -102,10 +96,8 @@ class Rutas {
         } else if (usuario != null && estaEnLogin) {
           return '/';
         }
-
         return null;
       },
     );
   }
-  
 }

@@ -10,31 +10,51 @@ import 'tema/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
   
-  Get.put(Controller());
-  await corregirNombreCampo();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    Get.put(Controller());
+    await corregirNombreCampo();
+    runApp(const MyApp());
+  } catch (e) {
+    print('Error initializing Firebase: $e');
+    runApp(const ErrorApp());
+  }
+}
 
-  runApp(const MyApp());
+class ErrorApp extends StatelessWidget {
+  const ErrorApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text('Error initializing app: Please try again later'),
+        ),
+      ),
+    );
+  }
 }
 
 Future<void> corregirNombreCampo() async {
-  final librosRef = FirebaseFirestore.instance.collection('libros');
-  final snapshot = await librosRef.get();
+  try {
+    final librosRef = FirebaseFirestore.instance.collection('libros');
+    final snapshot = await librosRef.get();
 
-  for (var doc in snapshot.docs) {
-    final data = doc.data();
-
-    if (data.containsKey('fecha de actualizacion')) {
-      final valor = data['fecha de actualizacion'];
-
-      await librosRef.doc(doc.id).update({
-        'ultimaActualizacion': valor,
-        'fecha de actualizacion': FieldValue.delete(),
-      });
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      if (data.containsKey('fecha de actualizacion')) {
+        await librosRef.doc(doc.id).update({
+          'ultimaActualizacion': data['fecha de actualizacion'],
+          'fecha de actualizacion': FieldValue.delete(),
+        });
+      }
     }
+  } catch (e) {
+    print('Error corrigiendo nombres de campo: $e');
   }
 }
 

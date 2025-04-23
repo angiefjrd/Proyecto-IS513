@@ -141,8 +141,8 @@ class Libro {
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       genres: genres ?? this.genres,
       vistas: vistas ?? this.vistas,
-      archivoUrl: archivoUrl ?? this.archivoUrl, // Opcional
-      nombreArchivo: nombreArchivo ?? this.nombreArchivo, // Opcional
+      archivoUrl: archivoUrl ?? this.archivoUrl, 
+      nombreArchivo: nombreArchivo ?? this.nombreArchivo, 
     );
   }
 }

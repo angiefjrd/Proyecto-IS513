@@ -232,7 +232,6 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
     });
   }
 
-// Agrega esta sección después de la sección de capítulos
 Widget _buildSeccionGaleria() {
   return Padding(
     padding: const EdgeInsets.all(16),

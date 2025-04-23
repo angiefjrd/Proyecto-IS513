@@ -144,15 +144,14 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
         .collection('libros')
         .doc(widget.libroId)
         .collection('capitulos')
-        .doc(); // Auto-generates a unique ID
-
+        .doc();
       await docRef.set(nuevoCapitulo);
 
       if (yContinuar) {
         _tituloController.clear();
         _quillController.clear();
         setState(() {
-          widget.numeroCapitulo++; // You might want to rethink how you track this
+          widget.numeroCapitulo++; 
         });
       } else {
         Get.back();

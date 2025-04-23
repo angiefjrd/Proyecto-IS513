@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:writerhub/models/libro.dart';
 import 'package:writerhub/widgets/botton_nav.dart';
 import 'package:writerhub/widgets/logo_text.dart';
-import '../widgets/book_card.dart';
 import '../views/perfil_page.dart';
 import '../views/detalle_page.dart';
 

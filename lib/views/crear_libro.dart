@@ -160,8 +160,7 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
   }
 
   // Método para publicar el libro
-  // ... (toda la parte inicial igual, sin cambios)
-
+  
   Future<void> _publicarLibro(Controller controlador, User? user) async {
     if (!_formKey.currentState!.validate()) return;
     if (user == null) {
