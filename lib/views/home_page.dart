@@ -5,8 +5,61 @@ import 'package:writerhub/models/libro.dart';
 import 'package:writerhub/widgets/botton_nav.dart';
 import 'package:writerhub/widgets/logo_text.dart';
 import '../widgets/book_card.dart';
-import '../services/api_services.dart';
 import '../views/perfil_page.dart';
+
+
+class LibroCard extends StatelessWidget {
+  final Libro book;
+
+  const LibroCard({super.key, required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 150,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 2 / 3,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: book.portadaUrl.isNotEmpty
+                  ? Image.network(
+                      book.portadaUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey.shade300,
+                        child: const Icon(Icons.image_not_supported, size: 40),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey.shade300,
+                      child: const Center(
+                        child: Icon(Icons.book, size: 40),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            book.titulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            book.autor,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,35 +79,25 @@ class _HomePageState extends State<HomePage> {
 
   Future<List<Libro>> fetchBooksFromFirebase() async {
     final snapshot = await FirebaseFirestore.instance.collection('libros').get();
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return Libro.fromJson({
-        ...data,
-        'id': doc.id,
-      });
-    }).toList();
+    return snapshot.docs.map((doc) => Libro.fromJson(doc.data())).toList();
   }
 
   Map<String, List<Libro>> groupBooksByGenre(List<Libro> books) {
-  final Map<String, List<Libro>> grouped = {};
+    final Map<String, List<Libro>> grouped = {};
 
-  for (final category in Categorias.lista) {
-    if (category == 'Todos') {
-      grouped[category] = books;
-    } else {
-      final filtered = books.where((book) {
-        final genres = (book as dynamic).genres ?? [];
-        return genres.contains(category);
-      }).toList();
+    for (final book in books) {
+      final genres = (book as dynamic).genres ?? []; // if you added genres to your model
 
-      if (filtered.isNotEmpty) {
-        grouped[category] = filtered;
+      for (final genre in genres) {
+        if (!grouped.containsKey(genre)) {
+          grouped[genre] = [];
+        }
+        grouped[genre]!.add(book);
       }
     }
-  }
 
-  return grouped;
-}
+    return grouped;
+  }
 
   Future<Map<String, List<Libro>>> fetchAndGroupBooks() async {
     final books = await fetchBooksFromFirebase();
@@ -103,7 +146,7 @@ class _HomePageState extends State<HomePage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Text(
-                      genre[0].toUpperCase() + genre.substring(1),
+                      genre[0].toUpperCase() + genre.substring(1), // Capitalize
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -130,3 +173,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
