@@ -16,7 +16,7 @@ class LibroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 150,
-      height: 230,
+      height: 250,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -175,7 +175,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   SizedBox(
-                    height: 250,
+                    height: 268,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: books.length,
@@ -191,7 +191,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               );
                             },
-                            child: LibroCard(book: books[index]),
+                            child: Flexible(child: LibroCard(book: books[index])),
                           ),
                         );
                       },
