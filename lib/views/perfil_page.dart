@@ -1,37 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:writerhub/views/detalle_page.dart';
+import 'package:writerhub/models/libro.dart';
 
 /// MODELO DEL LIBRO CREADO
-class LibroCreado {
-  final String id;
-  final String titulo;
-  final String portadaUrl;
+// class LibroCreado {
+//   final String id;
+//   final String titulo;
+//   final String portadaUrl;
 
-  LibroCreado({
-    required this.id,
-    required this.titulo,
-    required this.portadaUrl,
-  });
+//   LibroCreado({
+//     required this.id,
+//     required this.titulo,
+//     required this.portadaUrl,
+//   });
 
-  factory LibroCreado.fromMap(Map<String, dynamic> data, String docId) {
-    return LibroCreado(
-      id: docId,
-      titulo: data['titulo'] ?? 'Sin título',
-      portadaUrl: data['portadaUrl'] ?? '',
-    );
-  }
-}
+//   factory LibroCreado.fromMap(Map<String, dynamic> data, String docId) {
+//     return LibroCreado(
+//       id: docId,
+//       titulo: data['titulo'] ?? 'Sin título',
+//       portadaUrl: data['portadaUrl'] ?? '',
+//     );
+//   }
+// }
+
 
 class FirebaseServices {
-  Stream<List<LibroCreado>> getCreatedBooks() {
+  Stream<List<Libro>> getCreatedBooks() {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     return FirebaseFirestore.instance
         .collection('libros')
         .where('autorId', isEqualTo: uid)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => LibroCreado.fromMap(doc.data(), doc.id))
+            .map((doc) => Libro.fromJson(doc.data(), doc.id))
             .toList());
   }
 }
@@ -92,7 +95,7 @@ class ProfilePage extends StatelessWidget {
             const SizedBox(height: 10),
 
             //libros creados
-            StreamBuilder<List<LibroCreado>>(
+            StreamBuilder<List<Libro>>(
               stream: FirebaseServices().getCreatedBooks(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -117,31 +120,42 @@ class ProfilePage extends StatelessWidget {
                   ),
                   itemBuilder: (context, index) {
                     final libro = libros[index];
+                    
                     return Card(
                       elevation: 3,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(10)),
-                              child: libro.portadaUrl.isNotEmpty
-                                  ? Image.network(libro.portadaUrl,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity)
-                                  : const Icon(Icons.book, size: 80),
+                      child: InkWell(
+                        onTap: () {                          
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => BookDetailPage(libro: libros[index]),
+                                ),
+                              );                            
+                        },
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(10)),
+                                child: libro.portadaUrl.isNotEmpty
+                                    ? Image.network(libro.portadaUrl,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity)
+                                    : const Icon(Icons.book, size: 80),
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(libro.titulo,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),                          
+                              child: Text(libro.titulo,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
