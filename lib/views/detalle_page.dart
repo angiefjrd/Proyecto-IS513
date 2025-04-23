@@ -211,6 +211,7 @@ Future<void> guardarLibroEnBiblioteca(Libro libro) async {
                   );
                   return;
                 }
+                 print('ID del libro que estás buscando: $libroId');
 
                 // Referencia al documento del libro
                 final libroRef = FirebaseFirestore.instance
