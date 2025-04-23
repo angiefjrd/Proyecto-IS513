@@ -3,17 +3,20 @@ import 'package:get/get.dart';
 import 'package:writerhub/models/libro.dart';
 import 'package:writerhub/widgets/controller.dart';
 import 'package:writerhub/views/lecturacap.dart';
-import 'package:writerhub/views/lecturalib.dart';
 import 'package:writerhub/views/crear_capitulo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:writerhub/views/clibros.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:writerhub/views/galeria_page.dart';
+import 'package:writerhub/views/subir_arte_page.dart';
+import 'package:writerhub/models/arte.dart';
 
 class DetalleLibroPage extends StatefulWidget {
   final String libroId;
+  final Controller controller = Get.find();
 
-  const DetalleLibroPage({super.key, required this.libroId});
+
+  DetalleLibroPage({super.key, required this.libroId});
 
   @override
   State<DetalleLibroPage> createState() => _DetalleLibroPageState();
@@ -66,18 +69,28 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_libro.titulo),
-        actions: [
-          if (_libro.esEnEmision)
-            IconButton(
-              icon: const Icon(Icons.auto_stories),
-              onPressed: () => Get.to(
-                () => LecturaCapitulosPage(libro: _libro),
-              ),
-            ),
-
-        ],
+  title: Text(_libro.titulo),
+  actions: [
+    if (_libro.esEnEmision)
+      IconButton(
+        icon: const Icon(Icons.auto_stories),
+        onPressed: () => Get.to(
+          () => LecturaCapitulosPage(libro: _libro),
+        ),
       ),
+    IconButton(
+      icon: const Icon(Icons.photo_library),
+      onPressed: () => Get.to(
+        () => GaleriaArtePage(
+          libroId: _libro.id,
+          tituloLibro: _libro.titulo,
+          artes: _controller.obrasArte.where((a) => a.libroId == _libro.id).toList(),
+        ),
+      ),
+    ),
+  ],
+),
+
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,6 +100,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
             _buildReacciones(),
             _buildSeccionCapitulos(),
             _buildComentarios(),
+            _buildSeccionGaleria(),
           ],
         ),
       ),
@@ -217,6 +231,107 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
       );
     });
   }
+
+// Agrega esta sección después de la sección de capítulos
+Widget _buildSeccionGaleria() {
+  return Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Galería de Arte',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Obx(() {
+          final obrasArte = _controller.obrasArte
+              .where((obra) => obra.libroId == _libro.id)
+              .toList();
+          
+          if (obrasArte.isEmpty) {
+            return Column(
+              children: [
+                const Text('Aún no hay obras de arte para este libro'),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: () => Get.to(() => SubirArtePage(
+                    libroId: _libro.id,
+                    tituloLibro: _libro.titulo,
+                  )),
+                  child: const Text('Añadir Arte'),
+                ),
+              ],
+            );
+          }
+
+          return Column(
+            children: [
+              SizedBox(
+                height: 150,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: obrasArte.take(3).length,
+                  itemBuilder: (context, index) {
+                    final obra = obrasArte[index];
+                    return GestureDetector(
+                      onTap: () => _mostrarDetalleObra(obra),
+                      child: Container(
+                        width: 120,
+                        margin: const EdgeInsets.only(right: 8),
+                        child: Image.network(
+                          obra.imagenUrl,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (obrasArte.length > 3)
+                TextButton(
+                  onPressed: () => Get.to(() => GaleriaArtePage(
+                    libroId: _libro.id,
+                    tituloLibro: _libro.titulo,
+                    artes: obrasArte,
+                  )),
+                  child: const Text('Ver toda la galería'),
+                ),
+            ],
+          );
+        }),
+      ],
+    ),
+  );
+}
+
+void _mostrarDetalleObra(Arte obra) {
+  Get.dialog(
+    AlertDialog(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            obra.titulo,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(height: 8),
+          Image.network(obra.imagenUrl),
+          const SizedBox(height: 8),
+          Text(obra.descripcion),
+          const SizedBox(height: 8),
+          Text('Por: ${obra.artista}'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('Cerrar'),
+        ),
+      ],
+    ),
+  );
+}
+ 
+
 
   Widget _buildComentarios() {
     return Padding(

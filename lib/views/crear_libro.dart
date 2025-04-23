@@ -159,6 +159,9 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
     return await snapshot.ref.getDownloadURL();
   }
 
+  // Método para publicar el libro
+  // ... (toda la parte inicial igual, sin cambios)
+
   Future<void> _publicarLibro(Controller controlador, User? user) async {
     if (!_formKey.currentState!.validate()) return;
     if (user == null) {
@@ -202,11 +205,35 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
       await _firestore.collection('libros').doc(libro.id).set(libro.toJson());
       controlador.agregarLibro(libro);
 
-      Get.off(() => CrearCapituloPage(
-            libroId: libro.id,
-            tituloLibro: libro.titulo,
-            numeroCapitulo: 1,
-          ));
+      // Mostrar diálogo de éxito con opción de crear capítulos
+      await Get.dialog(
+        AlertDialog(
+          title: const Text('¡Libro publicado!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle, color: Colors.green, size: 50),
+              const SizedBox(height: 16),
+              Text(
+                'Tu libro "${libro.titulo}" ha sido publicado exitosamente',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Get.off(() => CrearCapituloPage(
+                      libroId: libro.id,
+                      tituloLibro: libro.titulo,
+                      numeroCapitulo: 1,
+                    ));
+              },
+              child: const Text('Crear Capítulo'),
+            ),
+          ],
+        ),
+      );
     } catch (e) {
       Get.snackbar('Error', 'Publicación fallida: ${e.toString()}');
     } finally {
@@ -216,12 +243,13 @@ class _CrearLibroPageState extends State<CrearLibroPage> {
     }
   }
 
+  // Método para crear el botón de publicación
   Widget _buildBotonPublicacion(Controller controlador, User? user) {
     return ElevatedButton(
-      onPressed: _isSubmitting ? null : () => _publicarLibro(controlador, user),
-      child: _isSubmitting
-          ? const CircularProgressIndicator()
-          : const Text('Publicar Libro'),
+      onPressed: () async {
+        await _publicarLibro(controlador, user);
+      },
+      child: const Text('Publicar Libro'),
     );
   }
 
