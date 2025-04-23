@@ -115,8 +115,6 @@ class Controller extends GetxController {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
       final obraRef = FirebaseFirestore.instance
-          .collection('libros')
-          .doc(libroId)
           .collection('obrasArte')
           .doc(obraId);
       await FirebaseFirestore.instance.runTransaction((transaction) async {
@@ -145,10 +143,18 @@ class Controller extends GetxController {
 
   Future<void> agregarObraArte(Arte obraArte) async {
     try {
-      await FirebaseFirestore.instance.collection('arte').add(obraArte.toMap());
-      obrasArte.add(obraArte);
+      isSaving.value = true;
+      final docRef = await FirebaseFirestore.instance
+          .collection('obrasArte')
+          .add(obraArte.toMap());
+      
+      obrasArte.add(obraArte.copyWith(id: docRef.id));
+      Get.snackbar('Éxito', 'Obra de arte agregada correctamente');
     } catch (e) {
-      print('Error al agregar obra de arte: $e');
+      Get.snackbar('Error', 'No se pudo agregar la obra de arte');
+      print('Error al agregar obra: $e');
+    } finally {
+      isSaving.value = false;
     }
   }
 
@@ -182,19 +188,27 @@ class Controller extends GetxController {
     }
   }
 
-  // Método para cargar las obras de arte asociadas al libro
   Future<void> cargarObrasArte({String? libroId}) async {
     try {
-      Query query = FirebaseFirestore.instance.collection('arte');
+      isLoading.value = true;
+      obrasArte.clear();
+      Query query = FirebaseFirestore.instance.collection('obrasArte');
+      
       if (libroId != null) {
         query = query.where('libroId', isEqualTo: libroId);
       }
-    
-      final snapshot = await query.get();
-      obrasArte.assignAll(snapshot.docs.map((doc) => 
-        Arte.fromMap(doc.id, doc.data() as Map<String, dynamic>)));
+
+      final querySnapshot = await query.get();
+      
+      obrasArte.assignAll(querySnapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return Arte.fromMap(doc.id, data);
+      }));
     } catch (e) {
-      print('Error cargando obras de arte: $e');
+      Get.snackbar('Error', 'No se pudieron cargar las obras de arte');
+      print('Error loading artworks: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -226,6 +240,6 @@ class Controller extends GetxController {
 
   List<Libro> getLibrosPorCategoria(String categoria) {
     if (categoria == 'Todos') return libros;
-    return libros.where((l) => l.reacciones.contains(categoria)).toList();
+    return libros.where((l) => l.etiquetas.contains(categoria)).toList();
   }
 }

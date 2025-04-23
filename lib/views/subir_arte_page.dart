@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:writerhub/widgets/controller.dart';
 import 'package:writerhub/models/arte.dart';
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart'; 
 
 class SubirArtePage extends StatefulWidget {
   final String libroId;
@@ -32,7 +31,7 @@ class _SubirArtePageState extends State<SubirArtePage> {
   double _uploadProgress = 0;
 
   Future<void> _seleccionarImagen() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery); // Corregido
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _imagenSeleccionada = File(pickedFile.path);
@@ -43,7 +42,7 @@ class _SubirArtePageState extends State<SubirArtePage> {
   Future<void> _subirObra() async {
     if (!_formKey.currentState!.validate()) return;
     if (_imagenSeleccionada == null) {
-      Get.snackbar('Error', 'Selecciona una imagen');
+      Get.snackbar('Error', 'Por favor selecciona una imagen');
       return;
     }
 
@@ -56,40 +55,48 @@ class _SubirArtePageState extends State<SubirArtePage> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Usuario no autenticado');
 
-      // Subir imagen a Firebase Storage
-      final ref = FirebaseStorage.instance
+      // 1. Subir imagen a Firebase Storage
+      final storageRef = FirebaseStorage.instance
           .ref()
-          .child('arte/${DateTime.now().millisecondsSinceEpoch}.jpg');
+          .child('obras_arte/${DateTime.now().millisecondsSinceEpoch}.jpg');
       
-      final uploadTask = ref.putFile(_imagenSeleccionada!);
+      final uploadTask = storageRef.putFile(_imagenSeleccionada!);
+      
+      // Mostrar progreso
       uploadTask.snapshotEvents.listen((taskSnapshot) {
         setState(() {
           _uploadProgress = taskSnapshot.bytesTransferred / taskSnapshot.totalBytes;
         });
       });
 
-      final snapshot = await uploadTask;
-      final imageUrl = await snapshot.ref.getDownloadURL();
+      // Esperar a que termine la subida
+      final taskSnapshot = await uploadTask.whenComplete(() {});
+      
+      // Obtener URL de descarga
+      final downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
-      // Crear objeto Arte
+      // 2. Crear el objeto Arte con la URL
       final nuevaObra = Arte(
-        id: '', // Firestore asignará ID
+        id: '', // Se asignará al crear el documento
         libroId: widget.libroId,
         titulo: _tituloController.text.trim(),
+        descripcion: _descripcionController.text.trim(),
+        imagenUrl: downloadUrl,
         artista: user.displayName ?? 'Anónimo',
         artistaId: user.uid,
-        imagenUrl: imageUrl,
-        descripcion: _descripcionController.text.trim(),
+        likes: 0,
+        likedBy: [],
         fechaCreacion: DateTime.now(),
       );
 
-      // Guardar en Firestore
-      final docRef = await FirebaseFirestore.instance.collection('arte').add(nuevaObra.toMap());
+      // 3. Guardar en Firestore
+      final controller = Get.find<Controller>();
+      await controller.agregarObraArte(nuevaObra);
       
       Get.back();
-      Get.snackbar('Éxito', 'Obra de arte publicada');
+      Get.snackbar('Éxito', 'Obra de arte publicada correctamente');
     } catch (e) {
-      Get.snackbar('Error', 'No se pudo subir: ${e.toString()}');
+      Get.snackbar('Error', 'No se pudo subir la obra: ${e.toString()}');
     } finally {
       setState(() {
         _isUploading = false;
@@ -100,7 +107,9 @@ class _SubirArtePageState extends State<SubirArtePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Subir arte para ${widget.tituloLibro}')),
+      appBar: AppBar(
+        title: Text('Subir arte para ${widget.tituloLibro}'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -121,33 +130,62 @@ class _SubirArtePageState extends State<SubirArtePage> {
                         ? Image.file(_imagenSeleccionada!, fit: BoxFit.cover)
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
+                            children: const [
                               Icon(Icons.add_photo_alternate, size: 50),
                               Text('Seleccionar imagen'),
                             ],
                           ),
                   ),
                 ),
+                const SizedBox(height: 20),
                 
-                // Formulario
+                // Campos del formulario
                 TextFormField(
                   controller: _tituloController,
-                  decoration: InputDecoration(labelText: 'Título'),
-                  validator: (v) => v!.isEmpty ? 'Requerido' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Título',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor ingresa un título';
+                    }
+                    return null;
+                  },
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _descripcionController,
-                  decoration: InputDecoration(labelText: 'Descripción'),
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción',
+                    border: OutlineInputBorder(),
+                  ),
                   maxLines: 3,
                 ),
+                const SizedBox(height: 20),
                 
-                // Progress bar
-                if (_isUploading) LinearProgressIndicator(value: _uploadProgress),
+                // Barra de progreso
+                if (_isUploading)
+                  Column(
+                    children: [
+                      LinearProgressIndicator(value: _uploadProgress),
+                      Text('Subiendo: ${(_uploadProgress * 100).toStringAsFixed(1)}%'),
+                    ],
+                  ),
                 
                 // Botón de subir
-                ElevatedButton(
-                  onPressed: _isUploading ? null : _subirObra,
-                  child: Text(_isUploading ? 'Subiendo...' : 'Publicar Arte'),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isUploading ? null : _subirObra,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: Text(
+                      _isUploading ? 'Subiendo...' : 'Publicar Obra',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ),
               ],
             ),
