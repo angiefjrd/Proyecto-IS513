@@ -15,7 +15,6 @@ class DetalleLibroPage extends StatefulWidget {
   final String libroId;
   final Controller controller = Get.find();
 
-
   DetalleLibroPage({super.key, required this.libroId});
 
   @override
@@ -41,7 +40,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
       if (_libro.esEnEmision) {
         await _controller.cargarCapitulos(_libro.id);
       }
-      
+
       // Actualizar contador de vistas
       if (FirebaseAuth.instance.currentUser?.uid != _libro.autorId) {
         await FirebaseFirestore.instance
@@ -69,28 +68,27 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
 
     return Scaffold(
       appBar: AppBar(
-  title: Text(_libro.titulo),
-  actions: [
-    if (_libro.esEnEmision)
-      IconButton(
-        icon: const Icon(Icons.auto_stories),
-        onPressed: () => Get.to(
-          () => LecturaCapitulosPage(libro: _libro),
-        ),
+        title: Text(_libro.titulo),
+        actions: [
+          if (_libro.esEnEmision)
+            IconButton(
+              icon: const Icon(Icons.auto_stories),
+              onPressed: () => Get.to(
+                () => LecturaCapitulosPage(libro: _libro),
+              ),
+            ),
+          IconButton(
+            icon: const Icon(Icons.photo_library),
+            onPressed: () => Get.to(
+              () => GaleriaArtePage(
+                libroId: _libro.id,
+                tituloLibro: _libro.titulo,
+                artes: _controller.obrasArte.where((a) => a.libroId == _libro.id).toList(), // Corregido
+              ),
+            ),
+          ),
+        ],
       ),
-    IconButton(
-      icon: const Icon(Icons.photo_library),
-      onPressed: () => Get.to(
-        () => GaleriaArtePage(
-          libroId: _libro.id,
-          tituloLibro: _libro.titulo,
-          artes: _controller.obrasArte.where((a) => a.libroId == _libro.id).toList(),
-        ),
-      ),
-    ),
-  ],
-),
-
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,105 +230,107 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
     });
   }
 
-Widget _buildSeccionGaleria() {
-  return Padding(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Galería de Arte',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Obx(() {
-          final obrasArte = _controller.obrasArte
-              .where((obra) => obra.libroId == _libro.id)
-              .toList();
-          
-          if (obrasArte.isEmpty) {
-            return Column(
-              children: [
-                const Text('Aún no hay obras de arte para este libro'),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => Get.to(() => SubirArtePage(
+  Widget _buildSeccionGaleria() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Galería de Arte',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: Icon(Icons.add),
+                onPressed: () => Get.to(
+                  SubirArtePage(
                     libroId: _libro.id,
                     tituloLibro: _libro.titulo,
-                  )),
-                  child: const Text('Añadir Arte'),
+                  ),
                 ),
-              ],
-            );
-          }
-
-          return Column(
-            children: [
-              SizedBox(
-                height: 150,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: obrasArte.take(3).length,
-                  itemBuilder: (context, index) {
-                    final obra = obrasArte[index];
-                    return GestureDetector(
+              ),
+            ],
+          ),
+          
+          Obx(() {
+            final obras = _controller.obrasArte
+                .where((o) => o.libroId == _libro.id)
+                .toList();
+              
+            if (obras.isEmpty) {
+              return Center(
+                child: Text('No hay obras aún'),
+              );
+            }
+            
+            return SizedBox(
+              height: 150,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: obras.length,
+                itemBuilder: (ctx, index) {
+                  final obra = obras[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: GestureDetector(
                       onTap: () => _mostrarDetalleObra(obra),
-                      child: Container(
-                        width: 120,
-                        margin: const EdgeInsets.only(right: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
                         child: Image.network(
                           obra.imagenUrl,
+                          width: 120,
+                          height: 150,
                           fit: BoxFit.cover,
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
+          
+          if (_controller.obrasArte.any((o) => o.libroId == _libro.id))
+            TextButton(
+              onPressed: () => Get.to(
+                GaleriaArtePage(
+                  libroId: _libro.id,
+                  tituloLibro: _libro.titulo,
+                  artes: _controller.obrasArte.where((o) => o.libroId == _libro.id).toList(), // Corregido
                 ),
               ),
-              if (obrasArte.length > 3)
-                TextButton(
-                  onPressed: () => Get.to(() => GaleriaArtePage(
-                    libroId: _libro.id,
-                    tituloLibro: _libro.titulo,
-                    artes: obrasArte,
-                  )),
-                  child: const Text('Ver toda la galería'),
-                ),
-            ],
-          );
-        }),
-      ],
-    ),
-  );
-}
-
-void _mostrarDetalleObra(Arte obra) {
-  Get.dialog(
-    AlertDialog(
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            obra.titulo,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          const SizedBox(height: 8),
-          Image.network(obra.imagenUrl),
-          const SizedBox(height: 8),
-          Text(obra.descripcion),
-          const SizedBox(height: 8),
-          Text('Por: ${obra.artista}'),
+              child: Text('Ver galería completa'),
+            ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('Cerrar'),
-        ),
-      ],
-    ),
-  );
-}
- 
+    );
+  }
 
+  void _mostrarDetalleObra(Arte obra) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(obra.titulo, style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Image.network(obra.imagenUrl),
+              SizedBox(height: 8),
+              Text(obra.descripcion),
+              SizedBox(height: 8),
+              Text('Por: ${obra.artista}'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildComentarios() {
     return Padding(

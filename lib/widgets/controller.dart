@@ -110,7 +110,6 @@ class Controller extends GetxController {
     }
   }
 
-  
   Future<void> darLikeObra({required String obraId, required String libroId}) async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -183,6 +182,22 @@ class Controller extends GetxController {
     }
   }
 
+  // Combina las dos definiciones de cargarObrasArte en un solo método
+  Future<void> cargarObrasArte({String? libroId}) async {
+    try {
+      Query query = FirebaseFirestore.instance.collection('arte');
+      if (libroId != null) {
+        query = query.where('libroId', isEqualTo: libroId);
+      }
+    
+      final snapshot = await query.get();
+      obrasArte.assignAll(snapshot.docs.map((doc) => 
+        Arte.fromMap(doc.id, doc.data() as Map<String, dynamic>)));
+    } catch (e) {
+      print('Error cargando obras de arte: $e');
+    }
+  }
+
   Future<void> agregarReaccion(String libroId, String reaccion) async {
     try {
       final libroRef = FirebaseFirestore.instance.collection('libros').doc(libroId);
@@ -213,22 +228,4 @@ class Controller extends GetxController {
     if (categoria == 'Todos') return libros;
     return libros.where((l) => l.reacciones.contains(categoria)).toList();
   }
-
-
-Future<void> cargarObrasArte({String? libroId}) async {
-  try {
-    Query query = FirebaseFirestore.instance.collection('arte');
-    if (libroId != null) {
-      query = query.where('libroId', isEqualTo: libroId);
-    }
-    
-    final snapshot = await query.get();
-    obrasArte.assignAll(snapshot.docs.map((doc) => 
-      Arte.fromMap(doc.id, doc.data() as Map<String, dynamic>)));
-  } catch (e) {
-    print('Error cargando obras de arte: $e');
-  }
-}
-
-
 }

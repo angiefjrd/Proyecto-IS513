@@ -1,3 +1,5 @@
+import 'dart:io';
+
 class Arte {
   final String id;
   final String libroId;
@@ -10,6 +12,8 @@ class Arte {
   final List<String> etiquetas;
   final int likes;
   final List<String> likedBy;
+  File? imagenFile; 
+  bool get isUploading => imagenFile != null && imagenUrl.isEmpty;
 
   Arte({
     required this.id,
