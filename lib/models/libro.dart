@@ -1,4 +1,6 @@
 import 'package:writerhub/models/comentarios.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class Libro {
   final String id;
@@ -43,27 +45,37 @@ class Libro {
 
   
   factory Libro.fromJson(Map<String, dynamic> json) {
-    return Libro(
-      id: json['id'] ?? '',
-      titulo: json['titulo'] ?? '',
-      autor: json['autor'] ?? '',
-      autorId: json['autorId'] ?? '',
-      portadaUrl: json['portadaUrl'] ?? '',
-      descripcion: json['descripcion'] ?? '',
-      contenidoCompleto: json['contenidoCompleto'],
-      esEnEmision: json['esEnEmision'] ?? false,
-      calificacion: (json['calificacion'] ?? 0).toDouble(),
-      lectores: json['lectores'] ?? 0,
-      reacciones: List<String>.from(json['reacciones'] ?? []),
-      comentarios: (json['comentarios'] as List<dynamic>? ?? [])
-          .map((item) => Comentario.fromMap(Map<String, dynamic>.from(item)))
-          .toList(),
-      fechaCreacion: DateTime.parse(json['fechaCreacion']),
-      genres: List<String>.from(json['genres'] ?? []),
-      ultimaActualizacion: DateTime.parse(json['ultimaActualizacion']),
-
-    );
+  DateTime parseFecha(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    return DateTime.tryParse(value.toString()) ?? DateTime.now();
   }
+
+  return Libro(
+    id: json['id']?.toString() ?? '',
+    titulo: json['titulo']?.toString() ?? '',
+    autor: json['autor']?.toString() ?? '',
+    autorId: json['autorId']?.toString() ?? '',
+    portadaUrl: json['portadaUrl']?.toString() ?? '',
+    descripcion: json['descripcion']?.toString() ?? '',
+    contenidoCompleto: json['contenidoCompleto']?.toString(),
+    esEnEmision: json['esEnEmision'] ?? false,
+    calificacion: (json['calificacion'] ?? 0).toDouble(),
+    lectores: json['lectores'] ?? 0,
+    reacciones: List<String>.from(json['reacciones'] ?? []),
+    comentarios: (json['comentarios'] as List<dynamic>? ?? [])
+        .map((item) => Comentario.fromMap(Map<String, dynamic>.from(item)))
+        .toList(),
+    fechaCreacion: parseFecha(json['fechaCreacion']),
+    ultimaActualizacion: parseFecha(json['ultimaActualizacion']),
+    genres: List<String>.from(json['genres'] ?? []),
+    capitulos: (json['capitulos'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+    archivoUrl: json['archivoUrl']?.toString(),
+    nombreArchivo: json['nombreArchivo']?.toString(),
+  );
+}
+
+
 
   Map<String, dynamic> toJson() {
     return {

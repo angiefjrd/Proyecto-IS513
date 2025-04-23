@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'widgets/ruta.dart';
 import 'widgets/controller.dart';
 import 'tema/theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +16,7 @@ void main() async {
 
   
   Get.put(Controller());
+  await corregirNombreCampo();
 
   runApp(const MyApp());
 }
@@ -43,3 +45,26 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+Future<void> corregirNombreCampo() async {
+  final librosRef = FirebaseFirestore.instance.collection('libros');
+  final snapshot = await librosRef.get();
+
+  for (var doc in snapshot.docs) {
+    final data = doc.data();
+
+    if (data.containsKey('fecha de actualizacion')) {
+      final valor = data['fecha de actualizacion'];
+
+      await librosRef.doc(doc.id).update({
+        'ultimaActualizacion': valor,
+        'fecha de actualizacion': FieldValue.delete(),
+      });
+
+      print('✅ Documento ${doc.id} corregido.');
+    }
+  }
+
+  print('🎉 Todos los campos han sido corregidos.');
+}
+

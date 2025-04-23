@@ -1,12 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:writerhub/models/categorias.dart';
 import 'package:writerhub/models/libro.dart';
 import 'package:writerhub/widgets/botton_nav.dart';
 import 'package:writerhub/widgets/logo_text.dart';
 import '../widgets/book_card.dart';
 import '../views/perfil_page.dart';
-
+import '../views/detalle_page.dart';
 
 class LibroCard extends StatelessWidget {
   final Libro book;
@@ -17,6 +16,7 @@ class LibroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 150,
+      height: 230,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -60,7 +60,6 @@ class LibroCard extends StatelessWidget {
   }
 }
 
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -78,15 +77,34 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<Libro>> fetchBooksFromFirebase() async {
+  try {
     final snapshot = await FirebaseFirestore.instance.collection('libros').get();
-    return snapshot.docs.map((doc) => Libro.fromJson(doc.data())).toList();
+    print("🔥 Documentos encontrados: ${snapshot.docs.length}");
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      print("📄 Datos del libro: $data");
+
+      data['id'] = doc.id; // asegurar el ID
+
+      final libro = Libro.fromJson(data);
+      print("✅ Libro convertido correctamente: ${libro.titulo}");
+
+      return libro;
+    }).toList();
+  } catch (e, stacktrace) {
+    print("❌ Error al obtener libros: $e");
+    print("📌 Stacktrace: $stacktrace");
+    rethrow; 
   }
+}
+
 
   Map<String, List<Libro>> groupBooksByGenre(List<Libro> books) {
     final Map<String, List<Libro>> grouped = {};
 
     for (final book in books) {
-      final genres = (book as dynamic).genres ?? []; // if you added genres to your model
+      final genres = book.genres ?? [];
 
       for (final genre in genres) {
         if (!grouped.containsKey(genre)) {
@@ -128,10 +146,16 @@ class _HomePageState extends State<HomePage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Error: \${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No se encontraron libros.'));
           }
+
+          if (snapshot.hasError) {
+  print('ERROR: ${snapshot.error}');
+  return Center(child: Text('Ocurrió un error: ${snapshot.error}'));
+}
+
 
           final groupedBooks = snapshot.data!;
 
@@ -158,7 +182,17 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, index) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: LibroCard(book: books[index]),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => BookDetailPage(libro: books[index]),
+                                ),
+                              );
+                            },
+                            child: LibroCard(book: books[index]),
+                          ),
                         );
                       },
                     ),
@@ -173,4 +207,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
