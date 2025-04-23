@@ -45,6 +45,7 @@ dependencies:
   dotted_border: ^2.1.0
   get: ^4.7.2
   file_picker: ^10.1.2
+  flutter_quill: ^11.2.0
   
 dev_dependencies:
   flutter_test:

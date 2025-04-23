@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:get/get.dart';
 import 'package:writerhub/widgets/controller.dart';
-import '../models/capitulo.dart';
-import '../models/libro.dart';
+import 'package:writerhub/models/capitulo.dart';
 
 class CrearCapituloPage extends StatefulWidget {
   final String libroId;
-  final String tituloLibro; 
+  final String tituloLibro;
   int numeroCapitulo;
 
   CrearCapituloPage({
@@ -23,9 +23,10 @@ class CrearCapituloPage extends StatefulWidget {
 class _CrearCapituloPageState extends State<CrearCapituloPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _tituloController = TextEditingController();
-  final TextEditingController _contenidoController = TextEditingController();
   bool _guardarComoBorrador = false;
   final Controller controller = Get.find();
+
+  final quill.QuillController _quillController = quill.QuillController.basic();
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +37,7 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
           IconButton(
             icon: const Icon(Icons.menu_book),
             onPressed: () {
-              // Aquí puedes navegar a la vista de capítulos del libro
-              // Ejemplo: Get.to(() => ListaCapitulosPage(libroId: widget.libroId));
+              // Navegar a otra vista si es necesario
             },
           ),
         ],
@@ -62,23 +62,20 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
                 },
               ),
               const SizedBox(height: 16),
+              quill.QuillSimpleToolbar(controller: _quillController),
+              const SizedBox(height: 8),
               Expanded(
-                child: TextFormField(
-                  controller: _contenidoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Contenido',
-                    border: OutlineInputBorder(),
-                    alignLabelWithHint: true,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  maxLines: null,
-                  expands: true,
-                  keyboardType: TextInputType.multiline,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Escribe el contenido del capítulo';
-                    }
-                    return null;
-                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: quill.QuillEditor.basic(
+                      controller: _quillController,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -122,11 +119,13 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
 
   Future<void> _publicarCapitulo({bool yContinuar = false}) async {
     if (_formKey.currentState!.validate()) {
+      final contenidoJson = _quillController.document.toDelta().toJson();
+
       final nuevoCapitulo = Capitulo(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         libroId: widget.libroId,
         titulo: _tituloController.text.trim(),
-        contenido: _contenidoController.text.trim(),
+        contenido: contenidoJson.toString(),
         numero: widget.numeroCapitulo,
         fechaPublicacion: DateTime.now(),
       );
@@ -135,9 +134,9 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
 
       if (yContinuar) {
         _tituloController.clear();
-        _contenidoController.clear();
+        _quillController.clear();
         setState(() {
-          widget.numeroCapitulo++; 
+          widget.numeroCapitulo++;
         });
       } else {
         Get.back();
@@ -153,7 +152,8 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
   @override
   void dispose() {
     _tituloController.dispose();
-    _contenidoController.dispose();
+    _quillController.dispose();
     super.dispose();
   }
 }
+
