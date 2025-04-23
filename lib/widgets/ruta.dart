@@ -15,6 +15,7 @@ import '../views/lecturacap.dart';
 import '../views/lecturalib.dart';
 import '../models/libro.dart';
 import '../views/subir_arte_page.dart';
+import '../views/library_page.dart';
 
 class Rutas {
   static GoRouter configurarRutas(User? usuario) {
@@ -85,6 +86,10 @@ class Rutas {
         GoRoute(
           path: '/signup',
           builder: (context, state) => const SignUpPage(),
+        ),
+         GoRoute(
+          path: '/biblioteca',
+          builder: (context, state) => const BibliotecaPage(),
         ),
       ],
       redirect: (BuildContext context, GoRouterState state) {

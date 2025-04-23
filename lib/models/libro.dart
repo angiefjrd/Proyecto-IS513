@@ -14,7 +14,7 @@ class Libro {
   final int lectores;
   final List<String> reacciones;
   final List<Comentario> comentarios;
-  final DateTime fechaCreacion;
+  final DateTime? fechaCreacion;
   final List<String> genres;
   final DateTime ultimaActualizacion;
   String? archivoUrl; // Opcional

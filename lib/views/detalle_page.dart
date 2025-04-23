@@ -163,11 +163,6 @@ Future<void> guardarLibroEnBiblioteca(Libro libro) async {
       .collection('biblioteca')
       .doc(libro.id);
 
-  await docRef.set({
-    'libroId': libro.id,
-    'titulo': libro.titulo,
-    'portadaUrl': libro.portadaUrl,
-    'autor': libro.autor,
-    'fechaGuardado': Timestamp.now(),
-  });
+  await docRef.set(libro.toJson());
+
 }

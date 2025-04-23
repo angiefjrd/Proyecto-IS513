@@ -21,8 +21,8 @@ class BottomNav extends StatelessWidget {
         if (index == 0) {
           // Mostrar diálogo para elegir tipo de creación
           _mostrarDialogoCreacion(context);
-        } else {
-          context.go('/');
+        } else if (index == 1){
+          context.go('/biblioteca');
         }
       },
     );
