@@ -1,16 +1,29 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:writerhub/models/libro.dart';
 
-class BookDetailPage extends StatelessWidget {
+class BookDetailPage extends StatefulWidget {
   final Libro libro;
 
   const BookDetailPage({super.key, required this.libro});
 
   @override
+  State<BookDetailPage> createState() => _BookDetailPageState();
+}
+
+class _BookDetailPageState extends State<BookDetailPage> {
+  late final String? _currentUserId;
+  @override
+   void initState() {
+    super.initState();
+    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  bool get isAuthor => _currentUserId == widget.libro.autorId;
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(libro.titulo),
+        title: Text(widget.libro.titulo),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -22,9 +35,9 @@ class BookDetailPage extends StatelessWidget {
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: libro.portadaUrl.isNotEmpty
+                child: widget.libro.portadaUrl.isNotEmpty
                     ? Image.network(
-                        libro.portadaUrl,
+                        widget.libro.portadaUrl,
                         height: 250,
                         width: 170,
                         fit: BoxFit.cover,
@@ -41,22 +54,22 @@ class BookDetailPage extends StatelessWidget {
 
             // Título y autor
             Text(
-              libro.titulo,
+              widget.libro.titulo,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Autor: ${libro.autor}',
+              'Autor: ${widget.libro.autor}',
               style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
 
             const SizedBox(height: 16),
 
             // Géneros
-            if (libro.genres.isNotEmpty)
+            if (widget.libro.genres.isNotEmpty)
               Wrap(
                 spacing: 8,
-                children: libro.genres.map((genre) {
+                children: widget.libro.genres.map((genre) {
                   return Chip(
                     label: Text(genre),
                     backgroundColor: Colors.purple.shade100,
@@ -72,17 +85,32 @@ class BookDetailPage extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
-            Text(libro.descripcion),
+            Text(widget.libro.descripcion),
 
             const SizedBox(height: 20),
 
             // Fecha de creación
             Text(
-              'Creado el: ${libro.fechaCreacion}',
+              'Creado el: ${widget.libro.fechaCreacion}',
               style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 20),
-
+            if (isAuthor)
+            Center(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text("Agregar Capítulo"),
+                onPressed: () {
+                  Navigator.pushNamed(
+                  context,
+                  '/crear-capitulo/${widget.libro.id}/${widget.libro.capitulos!.length + 1}', 
+                  arguments: {
+                    'tituloLibro': widget.libro.titulo,
+                    },
+                  );
+                },
+              ),
+            ),
             // Botón de volver
             Center(
               child: ElevatedButton.icon(

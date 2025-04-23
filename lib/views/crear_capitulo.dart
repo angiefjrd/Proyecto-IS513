@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:get/get.dart';
@@ -28,6 +29,7 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
 
   final quill.QuillController _quillController = quill.QuillController.basic();
 
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,25 +120,39 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
   }
 
   Future<void> _publicarCapitulo({bool yContinuar = false}) async {
-    if (_formKey.currentState!.validate()) {
-      final contenidoJson = _quillController.document.toDelta().toJson();
+  if (_formKey.currentState!.validate()) {
+    final contenidoJson = _quillController.document.toDelta().toJson();
 
-      final nuevoCapitulo = Capitulo(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        libroId: widget.libroId,
-        titulo: _tituloController.text.trim(),
-        contenido: contenidoJson.toString(),
-        numero: widget.numeroCapitulo,
-        fechaPublicacion: DateTime.now(),
-      );
 
-      await controller.agregarCapitulo(nuevoCapitulo);
+    try {
+      final snapshot = await FirebaseFirestore.instance
+     .collection('libros')
+     .doc(widget.libroId)
+      .collection('capitulos')
+      .get();
+      final numeroCapitulo = snapshot.docs.length + 1;
+
+      final nuevoCapitulo = {
+      'titulo': _tituloController.text.trim(),
+      'contenido': contenidoJson,
+      'numero': numeroCapitulo,
+      'fechaPublicacion': DateTime.now(),
+      'borrador': _guardarComoBorrador,
+      };
+
+      final docRef = FirebaseFirestore.instance
+        .collection('libros')
+        .doc(widget.libroId)
+        .collection('capitulos')
+        .doc(); // Auto-generates a unique ID
+
+      await docRef.set(nuevoCapitulo);
 
       if (yContinuar) {
         _tituloController.clear();
         _quillController.clear();
         setState(() {
-          widget.numeroCapitulo++;
+          widget.numeroCapitulo++; // You might want to rethink how you track this
         });
       } else {
         Get.back();
@@ -146,8 +162,11 @@ class _CrearCapituloPageState extends State<CrearCapituloPage> {
           snackPosition: SnackPosition.BOTTOM,
         );
       }
+    } catch (e) {
+      Get.snackbar('Error', 'No se pudo publicar el capítulo: $e');
     }
   }
+}
 
   @override
   void dispose() {
