@@ -31,6 +31,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
   void initState() {
     super.initState();
     _cargarLibro();
+    _controller.cargarObrasArte(libroId: widget.libroId);
   }
 
   Future<void> _cargarLibro() async {
@@ -231,83 +232,69 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
   }
 
   Widget _buildSeccionGaleria() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Galería de Arte',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                icon: Icon(Icons.add),
-                onPressed: () => Get.to(
-                  SubirArtePage(
-                    libroId: _libro.id,
-                    tituloLibro: _libro.titulo,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          Obx(() {
-            final obras = _controller.obrasArte
-                .where((o) => o.libroId == _libro.id)
-                .toList();
-              
-            if (obras.isEmpty) {
-              return Center(
-                child: Text('No hay obras aún'),
-              );
-            }
-            
-            return SizedBox(
-              height: 150,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: obras.length,
-                itemBuilder: (ctx, index) {
-                  final obra = obras[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: GestureDetector(
-                      onTap: () => _mostrarDetalleObra(obra),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          obra.imagenUrl,
-                          width: 120,
-                          height: 150,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          }),
-          
-          if (_controller.obrasArte.any((o) => o.libroId == _libro.id))
-            TextButton(
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Galería de Arte',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+              icon: Icon(Icons.add),
               onPressed: () => Get.to(
-                GaleriaArtePage(
+                SubirArtePage(
                   libroId: _libro.id,
                   tituloLibro: _libro.titulo,
-                  artes: _controller.obrasArte.where((o) => o.libroId == _libro.id).toList(), // Corregido
                 ),
               ),
-              child: Text('Ver galería completa'),
             ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+        
+        Obx(() {
+          final obras = _controller.obrasArte
+              .where((o) => o.libroId == _libro.id)
+              .toList();
+            
+          if (obras.isEmpty) {
+            return Center(child: Text('No hay obras aún'));
+          }
+          
+          return SizedBox(
+            height: 150,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: obras.length,
+              itemBuilder: (ctx, index) {
+                final obra = obras[index];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: GestureDetector(
+                    onTap: () => _mostrarDetalleObra(obra),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        obra.imagenUrl,
+                        width: 120,
+                        height: 150,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }),
+      ],
+    ),
+  );
+}
 
   void _mostrarDetalleObra(Arte obra) {
     showDialog(
