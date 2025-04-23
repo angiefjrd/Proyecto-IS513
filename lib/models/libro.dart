@@ -49,7 +49,7 @@ class Libro {
   });
 
   
-  factory Libro.fromJson(Map<String, dynamic> json) {
+  factory Libro.fromJson(Map<String, dynamic> json, String docID) {
   DateTime parseFecha(dynamic value) {
     if (value == null) return DateTime.now();
     if (value is Timestamp) return value.toDate();

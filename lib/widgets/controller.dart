@@ -34,7 +34,7 @@ class Controller extends GetxController {
           .collection('libros')
           .orderBy('fechaCreacion', descending: true)
           .get();
-      libros.assignAll(snapshot.docs.map((doc) => Libro.fromJson(doc.data() as Map<String, dynamic>)));
+      libros.assignAll(snapshot.docs.map((doc) => Libro.fromJson(doc.data() as Map<String, dynamic>, doc.id)));
     } catch (e) {
       Get.snackbar('Error', 'No se pudieron cargar los libros');
       print('Error al cargar libros: $e');

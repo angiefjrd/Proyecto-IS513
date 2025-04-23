@@ -83,18 +83,18 @@ class _HomePageState extends State<HomePage> {
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
-      print("📄 Datos del libro: $data");
+      debugPrint("📄 Datos del libro: $data");
 
       data['id'] = doc.id; // asegurar el ID
 
-      final libro = Libro.fromJson(data);
-      print("✅ Libro convertido correctamente: ${libro.titulo}");
+      final libro = Libro.fromJson(data, doc.id);
+      debugPrint("✅ Libro convertido correctamente: ${libro.titulo}");
 
       return libro;
     }).toList();
   } catch (e, stacktrace) {
-    print("❌ Error al obtener libros: $e");
-    print("📌 Stacktrace: $stacktrace");
+    debugPrint("❌ Error al obtener libros: $e");
+    debugPrint("📌 Stacktrace: $stacktrace");
     rethrow; 
   }
 }
