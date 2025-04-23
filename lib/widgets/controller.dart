@@ -7,16 +7,16 @@ import '../models/comentarios.dart';
 import '../models/capitulo.dart';
 import '../models/categorias.dart';
 
-class Controller extends GetxController {  
+class Controller extends GetxController {
   final RxList<Libro> libros = <Libro>[].obs;
   final RxList<Arte> obrasArte = <Arte>[].obs;
   final RxList<Capitulo> capitulos = <Capitulo>[].obs;
   final RxString selectedCategory = 'Todos'.obs;
   final RxBool isLoading = false.obs;
   final RxBool isSaving = false.obs;
-  final RxInt capituloActual = 1.obs; 
+  final RxInt capituloActual = 1.obs;
   final RxMap<String, int> ultimoCapituloLeido = <String, int>{}.obs;
-  
+
   final List<String> categorias = Categorias.lista;
 
   @override
@@ -25,20 +25,16 @@ class Controller extends GetxController {
     cargarLibros();
     cargarObrasArte();
   }
-  
+
   Future<void> cargarLibros() async {
     try {
       isLoading.value = true;
       libros.clear();
-      
       final snapshot = await FirebaseFirestore.instance
           .collection('libros')
           .orderBy('fechaCreacion', descending: true)
           .get();
-      
-      libros.assignAll(
-        snapshot.docs.map((doc) => Libro.fromJson(doc.data())),
-      );
+      libros.assignAll(snapshot.docs.map((doc) => Libro.fromJson(doc.data() as Map<String, dynamic>)));
     } catch (e) {
       Get.snackbar('Error', 'No se pudieron cargar los libros');
       print('Error al cargar libros: $e');
@@ -46,21 +42,18 @@ class Controller extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
   Future<void> cargarCapitulos(String libroId) async {
     try {
       isLoading.value = true;
       capitulos.clear();
-      
       final snapshot = await FirebaseFirestore.instance
           .collection('capitulos')
           .where('libroId', isEqualTo: libroId)
           .orderBy('numero')
           .get();
-          
       capitulos.assignAll(
-        snapshot.docs.map((doc) => Capitulo.fromMap(doc.id, doc.data())),
-      );
+          snapshot.docs.map((doc) => Capitulo.fromMap(doc.id, doc.data() as Map<String, dynamic>)));
     } catch (e) {
       Get.snackbar('Error', 'No se pudieron cargar los capítulos');
       print('Error al cargar capítulos: $e');
@@ -73,17 +66,12 @@ class Controller extends GetxController {
     try {
       isSaving.value = true;
       final user = FirebaseAuth.instance.currentUser;
-      
       if (user != null) {
         libro.autorId = user.uid;
-        if (libro.autor.isEmpty) {
-          libro.autor = user.displayName ?? 'Anónimo';
-        }
-        
+        libro.autor = libro.autor.isEmpty ? user.displayName ?? 'Anónimo' : libro.autor;
         await FirebaseFirestore.instance
             .collection('libros')
             .add(libro.toJson());
-            
         libros.insert(0, libro);
         Get.snackbar('Éxito', 'Libro creado correctamente');
       }
@@ -99,19 +87,15 @@ class Controller extends GetxController {
     try {
       isSaving.value = true;
       final user = FirebaseAuth.instance.currentUser;
-      
       if (user != null) {
-        // Verificar que el usuario es el autor del libro
         final libroDoc = await FirebaseFirestore.instance
             .collection('libros')
             .doc(capitulo.libroId)
             .get();
-            
         if (libroDoc.exists && libroDoc.data()?['autorId'] == user.uid) {
           await FirebaseFirestore.instance
               .collection('capitulos')
               .add(capitulo.toMap());
-              
           capitulos.add(capitulo);
           Get.snackbar('Éxito', 'Capítulo publicado');
         } else {
@@ -126,11 +110,43 @@ class Controller extends GetxController {
     }
   }
 
+  Future<void> darLikeObra({required String obraId, required String libroId}) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+      final obraRef = FirebaseFirestore.instance
+          .collection('libros')
+          .doc(libroId)
+          .collection('obrasArte')
+          .doc(obraId);
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(obraRef);
+        if (!snapshot.exists) return;
+        final likedBy = List<String>.from(snapshot.get('likedBy') ?? []);
+        final int likes = snapshot.get('likes') ?? 0;
+        if (likedBy.contains(userId)) {
+          transaction.update(obraRef, {
+            'likedBy': FieldValue.arrayRemove([userId]),
+            'likes': likes - 1,
+          });
+        } else {
+          transaction.update(obraRef, {
+            'likedBy': FieldValue.arrayUnion([userId]),
+            'likes': likes + 1,
+          });
+        }
+      });
+      await cargarObrasArte(libroId: libroId);
+    } catch (e) {
+      Get.snackbar('Error', 'No se pudo actualizar el like');
+      print('Error al dar like: $e');
+    }
+  }
+
   Future<void> agregarComentario(String libroId, String textoComentario) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
-      
       final nuevoComentario = Comentario(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         autor: user.displayName ?? 'Anónimo',
@@ -138,14 +154,12 @@ class Controller extends GetxController {
         fecha: DateTime.now(),
         avatarUrl: user.photoURL ?? '',
       );
-      
       await FirebaseFirestore.instance
           .collection('libros')
           .doc(libroId)
           .update({
             'comentarios': FieldValue.arrayUnion([nuevoComentario.toMap()])
           });
-          
       final index = libros.indexWhere((l) => l.id == libroId);
       if (index != -1) {
         final libro = libros[index];
@@ -158,22 +172,19 @@ class Controller extends GetxController {
       print('Error al agregar comentario: $e');
     }
   }
-  
+
   Future<void> agregarReaccion(String libroId, String reaccion) async {
     try {
       final libroRef = FirebaseFirestore.instance.collection('libros').doc(libroId);
-      
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final snapshot = await transaction.get(libroRef);
         if (!snapshot.exists) return;
-        
         final reacciones = List<String>.from(snapshot['reacciones'] ?? []);
         if (!reacciones.contains(reaccion)) {
           reacciones.add(reaccion);
           transaction.update(libroRef, {'reacciones': reacciones});
         }
       });
-      
       final index = libros.indexWhere((l) => l.id == libroId);
       if (index != -1) {
         final libro = libros[index];
@@ -193,12 +204,14 @@ class Controller extends GetxController {
     return libros.where((l) => l.reacciones.contains(categoria)).toList();
   }
 
-  Future<void> cargarObrasArte() async {
+  Future<void> cargarObrasArte({String? libroId}) async {
     try {
-      final snapshot = await FirebaseFirestore.instance.collection('arte').get();
-      obrasArte.assignAll(
-        snapshot.docs.map((doc) => Arte.fromMap(doc.id, doc.data())),
-      );
+      Query query = FirebaseFirestore.instance.collection('arte');
+      if (libroId != null) {
+        query = query.where('libroId', isEqualTo: libroId);
+      }
+      final snapshot = await query.get();
+      obrasArte.assignAll(snapshot.docs.map((doc) => Arte.fromMap(doc.id, doc.data() as Map<String, dynamic>)));
     } catch (e) {
       print('Error al cargar obras de arte: $e');
     }

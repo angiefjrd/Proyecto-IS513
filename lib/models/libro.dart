@@ -21,6 +21,8 @@ class Libro {
   String? archivoUrl;
   String? nombreArchivo;
   List<String>? capitulos;
+  final int vistas;
+  final List<String> etiquetas;
 
   Libro({
     this.capitulos,
@@ -41,6 +43,9 @@ class Libro {
     required this.ultimaActualizacion,
     this.archivoUrl,
     this.nombreArchivo,
+    this.etiquetas = const [],
+    required this.vistas,
+
   });
 
   
@@ -72,6 +77,8 @@ class Libro {
     capitulos: (json['capitulos'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
     archivoUrl: json['archivoUrl']?.toString(),
     nombreArchivo: json['nombreArchivo']?.toString(),
+    vistas: json['vistas'] ?? 0, // ✅ AHORA SÍ estás pasándolo
+    etiquetas: List<String>.from(json['etiquetas'] ?? []),
   );
 }
 
@@ -95,6 +102,8 @@ class Libro {
       'genres': genres, 
       'ultimaActualizacion': ultimaActualizacion.toString(),
       'capitulos': capitulos,
+      'vistas': vistas,
+      'etiquetas': etiquetas,
     };
   }
 
@@ -114,6 +123,7 @@ class Libro {
     List<Comentario>? comentarios,
     DateTime? fechaCreacion,
     List<String>? genres,
+    int? vistas,
 
   }) {
     return Libro(
@@ -132,6 +142,7 @@ class Libro {
       comentarios: comentarios ?? this.comentarios,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       genres: genres ?? this.genres,
+       vistas: vistas ?? this.vistas,
 
     );
   }

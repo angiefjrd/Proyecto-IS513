@@ -17,6 +17,7 @@ import '../views/lecturacap.dart';
 import '../views/lecturalib.dart';
 import '../models/arte.dart';
 import '../models/libro.dart';
+import '../views/subir_arte_page.dart';
 
 class Rutas {
   static GoRouter configurarRutas(User? usuario) {
@@ -49,19 +50,16 @@ class Rutas {
                 libroId: state.pathParameters['libroId']!,
               ),
             ),
+            
+            
             GoRoute(
-              path: 'agregar-arte/:libroId',
-              builder: (context, state) => Galeria(
-                arte: Arte(
-                  id: '',
-                  libroId: state.pathParameters['libroId']!,
-                  titulo: '',
-                  artista: '',
-                  imagenUrl: '',
-                  descripcion: '',
-                ),
-              ),
+            path: 'agregar-arte/:libroId',
+            builder: (context, state) => SubirArtePage( // Cambiado de Galeria a SubirArtePage
+            libroId: state.pathParameters['libroId']!,
+            tituloLibro: '', // Agregar título del libro o pasarlo como parámetro
             ),
+            ),
+
             GoRoute(
               path: 'crear-capitulo/:libroId/:numero',
               builder: (context, state) => CrearCapituloPage(
@@ -109,4 +107,5 @@ class Rutas {
       },
     );
   }
+  
 }

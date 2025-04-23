@@ -3,8 +3,9 @@ import '../models/arte.dart';
 
 class Galeria extends StatelessWidget {
   final Arte arte;
+  final String? libroId; // Hice libroId opcional con el signo de pregunta
 
-  const Galeria({super.key, required this.arte});
+  const Galeria({super.key, required this.arte, this.libroId});
 
   @override
   Widget build(BuildContext context) {

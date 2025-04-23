@@ -5,8 +5,10 @@ import 'package:writerhub/widgets/controller.dart';
 import 'package:writerhub/views/lecturacap.dart';
 import 'package:writerhub/views/lecturalib.dart';
 import 'package:writerhub/views/crear_capitulo.dart';
-import 'package:writerhub/views/clibros.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:writerhub/views/clibros.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class DetalleLibroPage extends StatefulWidget {
   final String libroId;
@@ -36,6 +38,17 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
       if (_libro.esEnEmision) {
         await _controller.cargarCapitulos(_libro.id);
       }
+      
+      // Actualizar contador de vistas
+      if (FirebaseAuth.instance.currentUser?.uid != _libro.autorId) {
+        await FirebaseFirestore.instance
+            .collection('libros')
+            .doc(_libro.id)
+            .update({
+              'vistas': FieldValue.increment(1),
+            });
+        _libro = _libro.copyWith(vistas: _libro.vistas + 1);
+      }
     } catch (e) {
       Get.snackbar('Error', 'No se pudo cargar el libro');
     } finally {
@@ -62,11 +75,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
                 () => LecturaCapitulosPage(libro: _libro),
               ),
             ),
-          if (_controller.capitulos.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.list),
-              onPressed: () => _mostrarListaCapitulos(),
-            ),
+
         ],
       ),
       body: SingleChildScrollView(
@@ -114,9 +123,22 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
               const SizedBox(width: 20),
               const Icon(Icons.people),
               Text(' ${_libro.lectores} lectores'),
+              const SizedBox(width: 20),
+              const Icon(Icons.visibility),
+              Text(' ${_libro.vistas} vistas'),
             ],
           ),
           const SizedBox(height: 16),
+          if (_libro.etiquetas.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              children: _libro.etiquetas.map((etiqueta) => Chip(
+                label: Text(etiqueta),
+                backgroundColor: Colors.deepPurple.withOpacity(0.1),
+              )).toList(),
+            ),
+            const SizedBox(height: 16),
+          ],
           const Text('Descripción', 
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
@@ -250,9 +272,9 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
     );
   }
 
-  Widget _buildActionButton() {
+  Widget? _buildActionButton() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user?.uid != _libro.autorId) return const SizedBox();
+    if (user?.uid != _libro.autorId) return null;
 
     return FloatingActionButton(
       onPressed: () {
@@ -264,9 +286,10 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
                 libroId: _libro.id,
                 numeroCapitulo: nextChapter,
                 tituloLibro: _libro.titulo,
-              ));
+              ))?.then((_) => _controller.cargarCapitulos(_libro.id));
         } else {
-          Get.to(() => LecturaLibroPage(libro: _libro));
+          // Opción para editar libro completo
+          Get.snackbar('Editar', 'Funcionalidad de edición en desarrollo');
         }
       },
       child: Icon(_libro.esEnEmision ? Icons.add : Icons.edit),
@@ -323,8 +346,8 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
         ),
         child: Column(
           children: [
-            Text('Todos los comentarios',
-                style: Theme.of(context).textTheme.headlineSmall),
+            const Text('Todos los comentarios',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             Expanded(
               child: ListView.builder(
                 itemCount: _libro.comentarios.length,

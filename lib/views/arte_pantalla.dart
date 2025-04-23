@@ -65,6 +65,8 @@ class ArtePantalla extends StatelessWidget {
                           artista: artistaController.text,
                           descripcion: descripcionController.text,
                           imagenUrl: imagenUrlController.text,
+                          artistaId: artistaController.text.toLowerCase().replaceAll(' ', '_'),
+                           fechaCreacion: DateTime.now(), 
                         );
                         controlador.agregarObraArte(nuevaObra);
                         tituloController.clear();
@@ -96,7 +98,7 @@ class ArtePantalla extends StatelessWidget {
                 child: ListView.builder(
                   itemCount: artesDelLibro.length,
                   itemBuilder: (context, index) {
-                    return Galeria(arte: artesDelLibro[index]);
+                    return Galeria(arte: artesDelLibro[index],libroId: libroId,);
                   },
                 ),
               ),
