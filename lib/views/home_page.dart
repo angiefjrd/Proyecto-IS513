@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:writerhub/models/categorias.dart';
 import 'package:writerhub/models/libro.dart';
 import 'package:writerhub/widgets/botton_nav.dart';
 import 'package:writerhub/widgets/logo_text.dart';
@@ -25,25 +26,35 @@ class _HomePageState extends State<HomePage> {
 
   Future<List<Libro>> fetchBooksFromFirebase() async {
     final snapshot = await FirebaseFirestore.instance.collection('libros').get();
-    return snapshot.docs.map((doc) => Libro.fromJson(doc.data())).toList();
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return Libro.fromJson({
+        ...data,
+        'id': doc.id,
+      });
+    }).toList();
   }
 
   Map<String, List<Libro>> groupBooksByGenre(List<Libro> books) {
-    final Map<String, List<Libro>> grouped = {};
+  final Map<String, List<Libro>> grouped = {};
 
-    for (final book in books) {
-      final genres = (book as dynamic).genres ?? ['default']; // if you added genres to your model
+  for (final category in Categorias.lista) {
+    if (category == 'Todos') {
+      grouped[category] = books;
+    } else {
+      final filtered = books.where((book) {
+        final genres = (book as dynamic).genres ?? [];
+        return genres.contains(category);
+      }).toList();
 
-      for (final genre in genres) {
-        if (!grouped.containsKey(genre)) {
-          grouped[genre] = [];
-        }
-        grouped[genre]!.add(book);
+      if (filtered.isNotEmpty) {
+        grouped[category] = filtered;
       }
     }
-
-    return grouped;
   }
+
+  return grouped;
+}
 
   Future<Map<String, List<Libro>>> fetchAndGroupBooks() async {
     final books = await fetchBooksFromFirebase();
@@ -92,7 +103,7 @@ class _HomePageState extends State<HomePage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Text(
-                      genre[0].toUpperCase() + genre.substring(1), // Capitalize
+                      genre[0].toUpperCase() + genre.substring(1),
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                   ),
