@@ -182,7 +182,7 @@ class Controller extends GetxController {
     }
   }
 
-  // Combina las dos definiciones de cargarObrasArte en un solo método
+  // Método para cargar las obras de arte asociadas al libro
   Future<void> cargarObrasArte({String? libroId}) async {
     try {
       Query query = FirebaseFirestore.instance.collection('arte');
