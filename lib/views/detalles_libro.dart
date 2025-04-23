@@ -42,14 +42,11 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
         await _controller.cargarCapitulos(_libro.id);
       }
 
-      // Actualizar contador de vistas
       if (FirebaseAuth.instance.currentUser?.uid != _libro.autorId) {
         await FirebaseFirestore.instance
             .collection('libros')
             .doc(_libro.id)
-            .update({
-              'vistas': FieldValue.increment(1),
-            });
+            .update({'vistas': FieldValue.increment(1)});
         _libro = _libro.copyWith(vistas: _libro.vistas + 1);
       }
     } catch (e) {
@@ -74,9 +71,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
           if (_libro.esEnEmision)
             IconButton(
               icon: const Icon(Icons.auto_stories),
-              onPressed: () => Get.to(
-                () => LecturaCapitulosPage(libro: _libro),
-              ),
+              onPressed: () => Get.to(() => LecturaCapitulosPage(libro: _libro)),
             ),
           IconButton(
             icon: const Icon(Icons.photo_library),
@@ -84,7 +79,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
               () => GaleriaArtePage(
                 libroId: _libro.id,
                 tituloLibro: _libro.titulo,
-                artes: _controller.obrasArte.where((a) => a.libroId == _libro.id).toList(), // Corregido
+                artes: _controller.obrasArte.where((a) => a.libroId == _libro.id).toList(),
               ),
             ),
           ),
@@ -126,8 +121,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
         children: [
           Text(_libro.titulo, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
-          Text('Por ${_libro.autor}', 
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('Por ${_libro.autor}', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -152,8 +146,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
             ),
             const SizedBox(height: 16),
           ],
-          const Text('Descripción', 
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Descripción', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(_libro.descripcion),
         ],
@@ -167,8 +160,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Reacciones',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Reacciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -204,8 +196,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Capítulos',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Capítulos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             if (capitulos.isEmpty)
               const Text('Aún no hay capítulos publicados')
@@ -214,8 +205,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
                 children: capitulos.take(3).map((capitulo) => ListTile(
                   title: Text('Capítulo ${capitulo.numero}: ${capitulo.titulo}'),
                   subtitle: Text(_formatearFecha(capitulo.fechaPublicacion)),
-                  onTap: () => Get.to(
-                    () => LecturaCapitulosPage(libro: _libro),
+                  onTap: () => Get.to(() => LecturaCapitulosPage(libro: _libro),
                     arguments: {'capituloInicial': capitulo.numero},
                   ),
                 )).toList(),
@@ -232,69 +222,80 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
   }
 
   Widget _buildSeccionGaleria() {
-  return Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Galería de Arte',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: () => Get.to(
-                SubirArtePage(
-                  libroId: _libro.id,
-                  tituloLibro: _libro.titulo,
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Galería de Arte', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              IconButton(
+                icon: Icon(Icons.add),
+                onPressed: () => Get.to(
+                  SubirArtePage(
+                    libroId: _libro.id,
+                    tituloLibro: _libro.titulo,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        
-        Obx(() {
-          final obras = _controller.obrasArte
-              .where((o) => o.libroId == _libro.id)
-              .toList();
-            
-          if (obras.isEmpty) {
-            return Center(child: Text('No hay obras aún'));
-          }
-          
-          return SizedBox(
-            height: 150,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: obras.length,
-              itemBuilder: (ctx, index) {
-                final obra = obras[index];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: GestureDetector(
-                    onTap: () => _mostrarDetalleObra(obra),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        obra.imagenUrl,
-                        width: 120,
-                        height: 150,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+            ],
+          ),
+          Obx(() {
+            final artesDelLibro = _controller.obrasArte
+                .where((o) => o.libroId == _libro.id)
+                .toList();
+
+            if (artesDelLibro.isEmpty) {
+              return Center(child: Text('No hay obras aún'));
+            }
+
+            return Column(
+              children: [
+                SizedBox(
+                  height: 150,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: artesDelLibro.length,
+                    itemBuilder: (ctx, index) {
+                      final obra = artesDelLibro[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: GestureDetector(
+                          onTap: () => _mostrarDetalleObra(obra),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              obra.imagenUrl,
+                              width: 120,
+                              height: 150,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          );
-        }),
-      ],
-    ),
-  );
-}
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    Get.to(() => GaleriaArtePage(
+                      libroId: _libro.id,
+                      tituloLibro: _libro.titulo,
+                      artes: artesDelLibro,
+                    ));
+                  },
+                  child: const Text('Ver toda la galería'),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
 
   void _mostrarDetalleObra(Arte obra) {
     showDialog(
@@ -325,8 +326,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Comentarios',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Comentarios', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           if (_libro.comentarios.isEmpty)
             const Text('Sé el primero en comentar')
@@ -339,7 +339,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
             ),
           if (_libro.comentarios.length > 3)
             TextButton(
-              onPressed: () => _mostrarTodosComentarios(),
+              onPressed: _mostrarTodosComentarios,
               child: const Text('Ver todos los comentarios'),
             ),
           const SizedBox(height: 8),
@@ -358,10 +358,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
                 icon: const Icon(Icons.send),
                 onPressed: () {
                   if (_comentarioController.text.isNotEmpty) {
-                    _controller.agregarComentario(
-                      _libro.id,
-                      _comentarioController.text,
-                    );
+                    _controller.agregarComentario(_libro.id, _comentarioController.text);
                     _comentarioController.clear();
                   }
                 },
@@ -384,12 +381,11 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
               ? 1
               : _controller.capitulos.last.numero + 1;
           Get.to(() => CrearCapituloPage(
-                libroId: _libro.id,
-                numeroCapitulo: nextChapter,
-                tituloLibro: _libro.titulo,
-              ))?.then((_) => _controller.cargarCapitulos(_libro.id));
+            libroId: _libro.id,
+            numeroCapitulo: nextChapter,
+            tituloLibro: _libro.titulo,
+          ))?.then((_) => _controller.cargarCapitulos(_libro.id));
         } else {
-          // Opción para editar libro completo
           Get.snackbar('Editar', 'Funcionalidad de edición en desarrollo');
         }
       },
@@ -407,8 +403,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
         ),
         child: Column(
           children: [
-            Text('Capítulos de ${_libro.titulo}',
-                style: Theme.of(context).textTheme.headlineSmall),
+            Text('Capítulos de ${_libro.titulo}', style: Theme.of(context).textTheme.headlineSmall),
             Expanded(
               child: Obx(() {
                 final capitulos = _controller.capitulos;
@@ -421,8 +416,7 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
                       subtitle: Text(_formatearFecha(capitulo.fechaPublicacion)),
                       onTap: () {
                         Get.back();
-                        Get.to(
-                          () => LecturaCapitulosPage(libro: _libro),
+                        Get.to(() => LecturaCapitulosPage(libro: _libro),
                           arguments: {'capituloInicial': capitulo.numero},
                         );
                       },
@@ -447,15 +441,12 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
         ),
         child: Column(
           children: [
-            const Text('Todos los comentarios',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('Todos los comentarios', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             Expanded(
               child: ListView.builder(
                 itemCount: _libro.comentarios.length,
                 itemBuilder: (ctx, index) {
-                  return Comentariolib(
-                    comentario: _libro.comentarios[index],
-                  );
+                  return Comentariolib(comentario: _libro.comentarios[index]);
                 },
               ),
             ),
